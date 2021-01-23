@@ -17,11 +17,13 @@ part of developers. That is, we could not find a way to factor out the thinking
 in one place.
 
 With `soso.statetree`, you describe the shape of any portion of your state and
-combine it as needed for a particular application. Less thinking = good.
+combine it as needed for a particular application. Less thinking about
+boilerplate means more time thinking about the actual business problem.
 
 ## Main Features
 
-* Intuitive syntax
+* Intuitive (hopefully) syntax
+* Composable state and model behavior
 * Potentially as efficient, if not more efficient than hand-written code, with
   fewer bugs and way less code
 * Sensible default behaviour
@@ -68,14 +70,17 @@ class State:
   myproperty: int = 5
   
 class MyModel(statetree.Model[State]):
-  StateClass = State
+  pass
   
 m = MyModel()
 state:State
 m.on_changed(lambda state: state.myproperty)
 print(m.state.myproperty)
 m.update(myproperty = 12)
-```
+`
 
 It is much clearer that we have an application state with a single property and
 we get all of the features of the hand-written version, for free.
+
+**NOTE:** I am not at all married to this syntax. I dislike the lack of
+consistency.
