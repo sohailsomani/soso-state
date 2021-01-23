@@ -1,7 +1,7 @@
-import copy
 import typing
 
-StateT = typing.TypeVar('StateT',covariant=True)
+StateT = typing.TypeVar('StateT', covariant=True)
+
 
 class Model(typing.Generic[StateT]):
     def __init__(self):
@@ -9,8 +9,25 @@ class Model(typing.Generic[StateT]):
         state_klass = typing.get_args(model_klass)[0]
         self.__current_state = state_klass()
 
-    def update(self,**kwargs):
-        pass
+    def update(self, *args, **kwargs: typing.Any):
+        func: typing.Callable[[StateT], None]
+
+        if len(args) == 0:
+            assert len(kwargs) != 0
+
+            def doit(state):
+                for key, value in kwargs.items():
+                    print(key, value)
+
+            func = doit
+        else:
+            assert len(args) == 1
+            assert len(kwargs) == 0
+            assert callable(args[0])
+            func = args[0]
+
+        # TODO
+        func(self.__current_state)
 
     @property
     def state(self) -> StateT:

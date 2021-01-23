@@ -22,5 +22,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install tox
       - name: Run tests with tox
-        run: tox
-    
+        run: tox -e py38
+      - name: Typing
+        run: tox -e type
+      - name: Linting
+        run: tox -e lint
