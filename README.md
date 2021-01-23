@@ -2,11 +2,66 @@
 
 `soso.statetree` is a Python implementation of a general state container
 pattern. Its goal is to centralize application state similar to Redux but allow
-efficient monitoring and updating of any portion of the state tree. The original
-version of this implementation was written in Typescript by yours truly and is
-very similar in spirit. Alas, that version is in some corporate repository
-somewhere making lives easier for a select few. Indeed, a separate Python
-version also written by yours truly is also currently in some corporate
+efficient monitoring and updating of any portion of the state tree. 
+
+With `soso.statetree`, you describe the shape of any portion of your state and
+compose it as needed for a particular application. Less time spent thinking
+about boilerplate means more time spent thinking about the actual business
+problem.
+
+## Quickstart
+
+`$ pip install soso-statetree`
+
+```python
+from soso import statetree
+from dataclasses import dataclass, field
+
+@dataclass
+class Person:
+  first_name: str
+  last_name: str
+
+@dataclass
+class AppState:
+  regional_managers: list[Person] = field(default_factory=list)
+  assistant_to_the_regional_managers: list[Person] = field(default_factory=list)
+  employees: list[Person] = field(default_factory=list)
+  
+class AppModel(statetree.Model[AppState]):
+  pass
+  
+...
+app = AppModel(AppState(
+  regional_managers = [Person("Michael","Scott")],
+  assistant_to_the_regional_managers = [Person("Dwight","Schrute")],
+  employees = [Person("Jim","Halpert"),
+               Person("Pam","Beesly")] 
+))
+
+token = app.subscribe(lambda state: state.regional_managers[0],print)
+app.update(regional_managers = [Person("Dwight","Schrute")],
+           assistant_to_the_regional_managers = [])
+# output: Person("Dwight","Schrute")
+token.disconnect()
+```
+
+## Main Features
+
+* Intuitive (hopefully) syntax
+* Compose state and model behaviour
+* Potentially as efficient, if not more efficient than hand-written code, with
+  fewer bugs and way less code
+* No cloning of state
+* Sensible default behaviour
+* Judicious use of Python 3.9 typing to catch errors as early as possible
+
+## Motivation
+
+The original version of this implementation was written in Typescript by yours
+truly and is very similar in spirit. Alas, that version is in some corporate
+repository somewhere making lives easier for a select few. Indeed, a separate
+Python version also written by yours truly is also currently in some corporate
 repository somewhere and I am tired of rewriting the damn thing every few years.
 So I am rewriting it for the last time.
 
@@ -16,22 +71,6 @@ Redux way of solving the performance issue required way too much ceremony on the
 part of developers. That is, we could not find a way to factor out the thinking
 in one place.
 
-With `soso.statetree`, you describe the shape of any portion of your state and
-combine it as needed for a particular application. Less thinking about
-boilerplate means more time thinking about the actual business problem.
-
-## Main Features
-
-* Intuitive (hopefully) syntax
-* Compose state and model behaviour
-* Potentially as efficient, if not more efficient than hand-written code, with
-  fewer bugs and way less code
-* Sensible default behaviour
-* Judicious use of Python typing to catch errors as early as possible
-* Requires Python 3.9 for typing/protocols niceties
-
-## Motivation
- 
 Consider the following code:
 
 ```python
