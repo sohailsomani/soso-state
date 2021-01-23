@@ -29,3 +29,11 @@ class TestStateTree(unittest.TestCase):
                        Person("Pam","Beesly")]
         )
 
+        self.assertEqual(app.state.regional_managers,[Person("Michael","Scott")])
+        self.assertEqual(app.state.assistant_to_the_regional_managers,
+                         [Person("Dwight","Schrute")])
+        self.assertEqual(app.state.employees,
+                         [
+                             Person("Jim","Halpert"),
+                             Person("Pam","Beesly")
+                         ])

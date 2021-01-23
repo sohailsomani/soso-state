@@ -12,3 +12,6 @@ class Model(typing.Generic[StateT]):
     def update(self,**kwargs):
         pass
 
+    @property
+    def state(self) -> StateT:
+        return self.__current_state
