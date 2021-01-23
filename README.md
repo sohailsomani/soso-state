@@ -1,6 +1,6 @@
 # soso.statetree
 
-`soso.statetree` is a Python 3.9+ implementation of a general state container
+`soso.statetree` is a Python 3.8+ implementation of a general state container
 pattern. Its goal is to centralize application state similar to Redux but allow
 efficient monitoring and updating of any portion of the application state tree.
 
@@ -79,8 +79,7 @@ app.subscribe(lambda state: state.regional_managers,
   fewer bugs and way less code
 * No cloning of state
 * Sensible default behaviour
-* Judicious use of Python 3.9 typing to catch errors as early as possible
-* Use of `eventkit` gives async features for "free"
+* Judicious use of Python typing to catch errors as early as possible
 
 ## Async examples
 

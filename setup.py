@@ -12,11 +12,11 @@ setuptools.setup(
     long_description = long_description,
     long_description_content_type = "text/markdown",
     url="https://github.com/sohailsomani/soso-statetree",
-    packages = setuptools.find_packages(),
+    packages = setuptools.find_packages(include=['soso.*']),
     classifiers = [
-        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.8",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent"
     ],
-    python_requires=">=3.9"
+    python_requires=">=3.8",
 )
