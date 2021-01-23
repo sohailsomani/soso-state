@@ -74,55 +74,5 @@ Redux way of solving the performance issue required way too much ceremony on the
 part of developers. That is, we could not find a way to factor out the thinking
 in one place.
 
-Consider the following code:
-
-```python
-class MyModel:
-   def __init__(self):
-     self.__myproperty = 5
-     self.myproperty_changed = Event()
-     
-   @property
-   def myproperty(self) -> int:
-     return self.__myproperty
-     
-   @myproperty.setter
-   def myproperty(self,val:int):
-     if self.__myproperty == val: return
-     self.__myproperty = val
-     self.myproperty_changed.signal()
-...
-
-m = MyModel()
-m.myproperty_changed.connect(print)
-print(m.myproperty)
-m.myproperty = 12
-```
-
-Although we have two major concepts here, `MyModel` and its property
-`myproperty`, there are nearly a dozen lines of boilerplate, none of which
-really add much value. With `soso.statetree`, this code looks something like:
-
-```python
-from soso import statetree
-from dataclasses import dataclass
-
-@dataclass
-class State:
-  myproperty: int = 5
-  
-class MyModel(statetree.Model[State]):
-  pass
-  
-m = MyModel()
-state:State # for typing support only
-m.on_changed(lambda state: state.myproperty)
-print(m.state.myproperty)
-m.update(myproperty = 12)
-```
-
-It is much clearer that we have an application state with a single property and
-we get all of the features of the hand-written version, for free.
-
 **NOTE:** I am not at all married to this syntax. I feel there could be more
 consistency in the syntax for events, state viewing and state updating.
