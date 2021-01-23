@@ -3,12 +3,12 @@
 `soso.statetree` is a Python implementation of a general state container
 pattern. Its goal is to centralize application state similar to Redux but allow
 efficient monitoring and updating of any portion of the state tree. The original
-version of this implementation was written in Typescript and is very similar in
-spirit. Alas, that version is in some corporate repository somewhere making
-lives easier for a select few. Indeed, a separate Python version also written by
-yours truly is also currently in some corporate repository somewhere and I am
-tired of rewriting the damn thing every few years. So I am rewriting it for the
-last time.
+version of this implementation was written in Typescript by yours truly and is
+very similar in spirit. Alas, that version is in some corporate repository
+somewhere making lives easier for a select few. Indeed, a separate Python
+version also written by yours truly is also currently in some corporate
+repository somewhere and I am tired of rewriting the damn thing every few years.
+So I am rewriting it for the last time.
 
 The idea was initially conceived after finding the Redux model was way too slow
 for real-time code (well, as real-time as you can get in a browser) and that the
@@ -68,7 +68,7 @@ class State:
   myproperty: int = 5
   
 class MyModel(statetree.Model[State]):
-  pass
+  StateClass = State
   
 m = MyModel()
 state:State
