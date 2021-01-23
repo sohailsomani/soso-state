@@ -5,7 +5,7 @@ pattern. Its goal is to centralize application state similar to Redux but allow
 efficient monitoring and updating of any portion of the state tree. The original
 version of this implementation was written in Typescript and is very similar in
 spirit. Alas, that version is in some corporate repository somewhere making
-lives easier for a select few. Indeed, a separate Python version written by
+lives easier for a select few. Indeed, a separate Python version also written by
 yours truly is also currently in some corporate repository somewhere and I am
 tired of rewriting the damn thing every few years. So I am rewriting it for the
 last time.
