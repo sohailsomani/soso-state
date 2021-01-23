@@ -64,7 +64,7 @@ app.update(regional_managers = [Person("Jim","Halpert")])
 # No output, since no longer interested
 
 # Subscribe to multiple values at the same time, 
-# notified when any of them change
+# notified once when one or more change at the same time
 app.subscribe(lambda state: state.regional_managers,
               lambda state: state.employees,
               print)
@@ -80,6 +80,18 @@ app.subscribe(lambda state: state.regional_managers,
 * No cloning of state
 * Sensible default behaviour
 * Judicious use of Python 3.9 typing to catch errors as early as possible
+* Use of `eventkit` gives async features for "free"
+
+## Async examples
+
+```python
+async def myfunc(app:AppModel):
+  regional_managers = await app.event(lambda state: state.regional_managers)
+  print(regional_managers)
+
+asyncio.get_event_loop().create_task(myfunc(app))
+# Output: [Person("Jim","Halpert")]
+```
 
 ## Motivation
 
