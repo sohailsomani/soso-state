@@ -1,6 +1,31 @@
+import typing
 import unittest
+from dataclasses import dataclass, field
+
+from soso import statetree
 
 
 class TestStateTree(unittest.TestCase):
-    def test_hello(self):
-        self.assertTrue(False)
+    def test_README(self):
+        @dataclass
+        class Person:
+            first_name: str
+            last_name: str
+
+        @dataclass
+        class AppState:
+            regional_managers: typing.List[Person]  = field(default_factory=list)
+            assistant_to_the_regional_managers: typing.List[Person]  = field(default_factory=list)
+            employees: typing.List[Person]  = field(default_factory=list)
+
+        class AppModel(statetree.Model[AppState]):
+            pass
+
+        app = AppModel()
+        app.update(
+            regional_managers=[Person("Michael","Scott")],
+            assistant_to_the_regional_managers=[Person("Dwight","Schrute")],
+            employees=[Person("Jim","Halpert"),
+                       Person("Pam","Beesly")]
+        )
+
