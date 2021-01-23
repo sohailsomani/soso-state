@@ -94,7 +94,11 @@ The idea was initially conceived after finding the Redux model was way too slow
 for real-time code (well, as real-time as you can get in a browser) and that the
 Redux way of solving the performance issue required way too much ceremony on the
 part of developers. That is, we could not find a way to factor out the thinking
-in one place.
+about performance in one place.
 
 **NOTE:** I am not at all married to this syntax. I feel there could be more
 consistency in the syntax for events, state viewing and state updating.
+
+## Implementation
+
+Boring and straightforward
