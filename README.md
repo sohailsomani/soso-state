@@ -7,13 +7,15 @@ version of this implementation was written in Typescript and is very similar in
 spirit. Alas, that version is in some corporate repository somewhere making
 lives easier for a select few. Indeed, a separate Python version written by
 yours truly is also currently in some corporate repository somewhere and I am
-tired of rewriting the damn thing every few years.
+tired of rewriting the damn thing every few years. So I am rewriting it for the
+last time.
 
 The idea was initially conceived after finding the Redux model was way too slow
-for real-time code (well, as real-time as you can get in a browser).
+for real-time code (well, as real-time as you can get in a browser) and that the
+Redux way of solving the performance issue required way too much thinking.
 
 With `soso.statetree`, you describe the shape of any portion of your state and
-combine it as needed for a particular application.
+combine it as needed for a particular application. Less thinking = good.
 
 ## Main Features
 
@@ -67,8 +69,8 @@ class MyModel(statetree.Model[State]):
   pass
   
 m = MyModel()
-x:State # for typing support in the lambda only
-m.on_changed(lambda x: x.myproperty,print)
+state:State
+m.on_changed(lambda state: state.myproperty)
 print(m.state.myproperty)
 m.update(myproperty = 12)
 ```
