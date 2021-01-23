@@ -41,8 +41,8 @@ app = AppModel(AppState(
 
 # Subscribe to changes in the 0th position of the regional_managers array
 token = app.subscribe(lambda state: state.regional_managers[0],print)
-# Subscribe to Pam's updates
-app.subscribe(lambda state: state.employees[1],print)
+# Subscribe to Pam's last name updates
+app.subscribe(lambda state: state.employees[1].last_name,print)
 app.update(regional_managers = [Person("Dwight","Schrute")],
            assistant_to_the_regional_managers = [])
 # output: Person("Dwight","Schrute")
@@ -50,7 +50,7 @@ token.disconnect()
 def pamGetsMarried(state:AppState):
    state.employees[1].last_name = "Halpert"
 app.update(pamGetsMarried)
-# output: Person("Pam","Halpert")
+# output: "Halpert"
 app.update(regional_managers = [Person("Jim","Halpert")])
 # No output
 ```
