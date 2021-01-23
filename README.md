@@ -12,7 +12,9 @@ last time.
 
 The idea was initially conceived after finding the Redux model was way too slow
 for real-time code (well, as real-time as you can get in a browser) and that the
-Redux way of solving the performance issue required way too much thinking.
+Redux way of solving the performance issue required way too much ceremony on the
+part of developers. That is, we could not find a way to factor out the thinking
+in one place.
 
 With `soso.statetree`, you describe the shape of any portion of your state and
 combine it as needed for a particular application. Less thinking = good.
