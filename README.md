@@ -77,7 +77,7 @@ state:State
 m.on_changed(lambda state: state.myproperty)
 print(m.state.myproperty)
 m.update(myproperty = 12)
-`
+```
 
 It is much clearer that we have an application state with a single property and
 we get all of the features of the hand-written version, for free.
