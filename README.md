@@ -1,8 +1,8 @@
 # soso.statetree
 
-`soso.statetree` is a Python implementation of a general state container
+`soso.statetree` is a Python 3.9+ implementation of a general state container
 pattern. Its goal is to centralize application state similar to Redux but allow
-efficient monitoring and updating of any portion of the state tree. 
+efficient monitoring and updating of any portion of the application state tree.
 
 With `soso.statetree`, you describe the shape of any portion of your state and
 compose it as needed for a particular application. Less time spent thinking
@@ -41,10 +41,16 @@ app = AppModel(AppState(
 
 # Subscribe to changes in the 0th position of the regional_managers array
 token = app.subscribe(lambda state: state.regional_managers[0],print)
+# Subscribe to Pam's updates
+app.subscribe(lambda state: state.employees[1],print)
 app.update(regional_managers = [Person("Dwight","Schrute")],
            assistant_to_the_regional_managers = [])
 # output: Person("Dwight","Schrute")
 token.disconnect()
+def pamGetsMarried(state:AppState):
+   state.employees[1].last_name = "Halpert"
+app.update(pamGetsMarried)
+# output: Person("Pam","Halpert")
 app.update(regional_managers = [Person("Jim","Halpert")])
 # No output
 ```
