@@ -65,7 +65,11 @@ app.update(regional_managers = [Person("Jim","Halpert")])
 # No output, since no longer interested
 
 # Subscribe to multiple values at the same time
-app.update
+app.subscribe(lambda state: [
+  state.regional_managers,
+  state.employees
+],print)
+# output: [Person("Jim","Halpert")] [Person("Pam","Halpert")]
 ```
 
 ## Main Features
