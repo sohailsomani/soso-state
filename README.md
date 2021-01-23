@@ -1,21 +1,23 @@
-# soso.statetree
+# soso.state
 
-`soso.statetree` is a Python 3.8+ implementation of a general state container
+`soso.state` is a Python 3.8+ implementation of a general state container
 pattern. Its goal is to centralize application state similar to Redux but allow
 efficient monitoring and updating of any portion of the application state tree.
 
-With `soso.statetree`, you describe the shape of any portion of your state and
+With `soso.state`, you describe the shape of any portion of your state and
 compose it as needed for a particular application. Less time spent thinking
 about boilerplate means more time spent thinking about the actual business
 problem.
 
 ## Quickstart
 
-`$ pip install soso-statetree`
+`$ pip install soso-state`
 
 ```python
-from soso import statetree
 from dataclasses import dataclass, field
+
+from soso import state
+
 
 @dataclass
 class Person:
@@ -28,7 +30,7 @@ class AppState:
   assistant_to_the_regional_managers: list[Person] = field(default_factory=list)
   employees: list[Person] = field(default_factory=list)
   
-class AppModel(statetree.Model[AppState]):
+class AppModel(state.Model[AppState]):
   pass
   
 app = AppModel(AppState(

@@ -2,7 +2,7 @@ import typing
 import unittest
 from dataclasses import dataclass, field
 
-from soso import statetree
+from soso import state
 
 
 @dataclass
@@ -19,7 +19,7 @@ class AppState:
     employees: typing.List[Person] = field(default_factory=list)
 
 
-class AppModel(statetree.Model[AppState]):
+class AppModel(state.Model[AppState]):
     pass
 
 
@@ -39,3 +39,12 @@ class TestREADME(unittest.TestCase):
         self.assertEqual(app.state.employees,
                          [Person("Jim", "Halpert"),
                           Person("Pam", "Beesly")])
+
+        def pam_gets_married(state:AppState):
+            state.employees[1].last_name = "Halpert"
+
+        print("****HELLO")
+        app.update(pam_gets_married)
+
+        self.assertEqual(app.state.employees[1].last_name,
+                         "Halpert")
