@@ -23,7 +23,7 @@ boilerplate means more time thinking about the actual business problem.
 ## Main Features
 
 * Intuitive (hopefully) syntax
-* Composable state and model behavior
+* Compose state and model behaviour
 * Potentially as efficient, if not more efficient than hand-written code, with
   fewer bugs and way less code
 * Sensible default behaviour
