@@ -82,5 +82,5 @@ m.update(myproperty = 12)
 It is much clearer that we have an application state with a single property and
 we get all of the features of the hand-written version, for free.
 
-**NOTE:** I am not at all married to this syntax. I dislike the lack of
-consistency.
+**NOTE:** I am not at all married to this syntax. I feel there could be more
+consistency in the syntax for events, state viewing and state updating.
