@@ -39,11 +39,14 @@ app = AppModel(AppState(
                Person("Pam","Beesly")] 
 ))
 
+# Subscribe to changes in the 0th position of the regional_managers array
 token = app.subscribe(lambda state: state.regional_managers[0],print)
 app.update(regional_managers = [Person("Dwight","Schrute")],
            assistant_to_the_regional_managers = [])
 # output: Person("Dwight","Schrute")
 token.disconnect()
+app.update(regional_managers = [Person("Jim","Halpert")])
+# No output
 ```
 
 ## Main Features
