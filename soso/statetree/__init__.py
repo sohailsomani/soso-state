@@ -17,7 +17,7 @@ class Model(typing.Generic[StateT]):
 
             def doit(state):
                 for key, value in kwargs.items():
-                    print(key, value)
+                    setattr(state, key, value)
 
             func = doit
         else:
