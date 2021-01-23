@@ -39,20 +39,33 @@ app = AppModel(AppState(
                Person("Pam","Beesly")] 
 ))
 
-# Subscribe to changes in the 0th position of the regional_managers array
+# Subscribe to changes in the 0th position of the regional_managers array.
+# The callback function is always called initially
 token = app.subscribe(lambda state: state.regional_managers[0],print)
+# Output: Person("Michael","Scott")
+
 # Subscribe to Pam's last name updates
 app.subscribe(lambda state: state.employees[1].last_name,print)
+
+# Update regional_managers and assistant_to_the_regional_managers atomically
 app.update(regional_managers = [Person("Dwight","Schrute")],
            assistant_to_the_regional_managers = [])
 # output: Person("Dwight","Schrute")
+
+# No longer interested in regional_manager updates
 token.disconnect()
+
+# For more complex state updates, use a function
 def pamGetsMarried(state:AppState):
    state.employees[1].last_name = "Halpert"
 app.update(pamGetsMarried)
 # output: "Halpert"
+
 app.update(regional_managers = [Person("Jim","Halpert")])
-# No output
+# No output, since no longer interested
+
+# Subscribe to multiple values at the same time
+app.update
 ```
 
 ## Main Features
