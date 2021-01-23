@@ -9,6 +9,9 @@ lives easier for a select few. Indeed, a separate Python version written by
 yours truly is also currently in some corporate repository somewhere and I am
 tired of rewriting the damn thing every few years.
 
+The idea was initially conceived after finding the Redux model was way too slow
+for real-time code (well, as real-time as you can get in a browser).
+
 With `soso.statetree`, you describe the shape of any portion of your state and
 combine it as needed for a particular application.
 
@@ -16,7 +19,7 @@ combine it as needed for a particular application.
 
 * Intuitive syntax
 * Potentially as efficient, if not more efficient than hand-written code, with
-  fewer bugs
+  fewer bugs and way less code
 * Sensible default behaviour
 * Judicious use of Python typing to catch errors as early as possible
 * Requires Python 3.9 for typing/protocols niceties
@@ -66,6 +69,8 @@ class MyModel(statetree.Model[State]):
 m = MyModel()
 x:State # for typing support in the lambda only
 m.on_changed(lambda x: x.myproperty,print)
+print(m.state.myproperty)
+m.update(myproperty = 12)
 ```
 
 It is much clearer that we have an application state with a single property and
