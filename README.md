@@ -73,7 +73,7 @@ class MyModel(statetree.Model[State]):
   pass
   
 m = MyModel()
-state:State
+state:State # for typing support only
 m.on_changed(lambda state: state.myproperty)
 print(m.state.myproperty)
 m.update(myproperty = 12)
