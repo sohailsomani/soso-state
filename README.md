@@ -31,7 +31,6 @@ class AppState:
 class AppModel(statetree.Model[AppState]):
   pass
   
-...
 app = AppModel(AppState(
   regional_managers = [Person("Michael","Scott")],
   assistant_to_the_regional_managers = [Person("Dwight","Schrute")],
@@ -56,19 +55,19 @@ app.update(regional_managers = [Person("Dwight","Schrute")],
 token.disconnect()
 
 # For more complex state updates, use a function
-def pamGetsMarried(state:AppState):
+def pam_gets_married(state:AppState):
    state.employees[1].last_name = "Halpert"
-app.update(pamGetsMarried)
+app.update(pam_gets_married)
 # output: "Halpert"
 
 app.update(regional_managers = [Person("Jim","Halpert")])
 # No output, since no longer interested
 
-# Subscribe to multiple values at the same time
-app.subscribe(lambda state: [
-  state.regional_managers,
-  state.employees
-],print)
+# Subscribe to multiple values at the same time, 
+# notified when any of them change
+app.subscribe(lambda state: state.regional_managers,
+              lambda state: state.employees,
+              print)
 # output: [Person("Jim","Halpert")] [Person("Pam","Halpert")]
 ```
 
