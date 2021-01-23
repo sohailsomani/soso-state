@@ -40,7 +40,7 @@ app = AppModel(AppState(
 ))
 
 # Subscribe to changes in the 0th position of the regional_managers array.
-# The callback function is always called initially
+# The callback function is always called initially with the current values
 token = app.subscribe(lambda state: state.regional_managers[0],print)
 # Output: Person("Michael","Scott")
 
