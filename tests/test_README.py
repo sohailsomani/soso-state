@@ -39,5 +39,3 @@ class TestREADME(unittest.TestCase):
         self.assertEqual(app.state.employees,
                          [Person("Jim", "Halpert"),
                           Person("Pam", "Beesly")])
-
-        app.update()
