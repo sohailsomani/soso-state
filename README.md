@@ -12,7 +12,9 @@ problem.
 
 ## Quickstart
 
-`$ pip install soso-state`
+`$ pip install soso-state**
+
+**Note**: The most up-to-date version of this code is in `test_README.py`.
 
 ```python
 from dataclasses import dataclass, field
