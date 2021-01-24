@@ -63,7 +63,7 @@ class PropertyOp:
 class Node:
     children: typing.DefaultDict[str, "Node"] = field(
         default_factory=lambda: defaultdict(Node))
-    event:Event = field(default_factory=lambda: Event("NodeUpdateEvent"))
+    event: Event = field(default_factory=lambda: Event("NodeUpdateEvent"))
     # The type of access to this node
     op: typing.Optional[PropertyOp] = None
 
@@ -93,27 +93,26 @@ class Model(typing.Generic[StateT]):
             root = op.get_value(root)
         return root
 
-    def subscribe(self,
-                  func: PropertyCallback[StateT],
+    def subscribe(self, func: PropertyCallback[StateT],
                   callback: EventCallback) -> EventToken:
-        event,ops = self.__event(func)
-        token = event.connect(callback,Event.Group.PROCESS)
+        event, ops = self.__event(func)
+        token = event.connect(callback, Event.Group.PROCESS)
         value = self.__get_value_for_ops(ops)
         # call with the initial value
         callback(value)
         return token
 
-    def __event(self,
-              func:PropertyCallback[StateT]) -> typing.Tuple[Event,typing.List[PropertyOp]]:
+    def __event(
+        self, func: PropertyCallback[StateT]
+    ) -> typing.Tuple[Event, typing.List[PropertyOp]]:
         proxy = Proxy()
         func(proxy)  # type: ignore
         ops = _get_ops(proxy)
 
         node = self.__get_node_for_ops(ops)
-        return node.event,ops
+        return node.event, ops
 
-    def event(self,
-              func:PropertyCallback[StateT]) -> Event:
+    def event(self, func: PropertyCallback[StateT]) -> Event:
         return self.__event(func)[0]
 
     def __fire_all_child_events(self, node: Node, parent: typing.Any) -> None:
@@ -123,7 +122,7 @@ class Model(typing.Generic[StateT]):
                 child_value = child_node.op.get_value(parent)
                 child_node.event.emit(child_value)
                 self.__fire_all_child_events(child_node, child_value)
-            except:
+            except Exception:
                 logging.getLogger(__name__).info(traceback.format_exc())
 
     def update(self, *args, **kwargs: typing.Any):
