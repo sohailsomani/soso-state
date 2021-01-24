@@ -94,28 +94,27 @@ class Model(typing.Generic[StateT]):
         return root
 
     def subscribe(self,
-                  props: typing.Union[PropertyCallback[StateT],
-                                      typing.List[PropertyCallback[StateT]]],
+                  func: PropertyCallback[StateT],
                   callback: EventCallback) -> EventToken:
-        if not isinstance(props, list):
-            props = [props]
+        event,ops = self.__event(func)
+        token = event.connect(callback,Event.Group.PROCESS)
+        value = self.__get_value_for_ops(ops)
+        # call with the initial value
+        callback(value)
+        return token
 
-        # we don't yet handle subscribing to multiple properties
-        assert len(props) == 1
-
-        func = props[0]
+    def __event(self,
+              func:PropertyCallback[StateT]) -> typing.Tuple[Event,typing.List[PropertyOp]]:
         proxy = Proxy()
         func(proxy)  # type: ignore
         ops = _get_ops(proxy)
 
         node = self.__get_node_for_ops(ops)
-        token = node.event.connect(callback, Event.Group.PROCESS)
+        return node.event,ops
 
-        value = self.__get_value_for_ops(ops)
-        # call with the initial value
-        callback(value)
-
-        return token
+    def event(self,
+              func:PropertyCallback[StateT]) -> Event:
+        return self.__event(func)[0]
 
     def __fire_all_child_events(self, node: Node, parent: typing.Any) -> None:
         for name, child_node in node.children.items():
@@ -125,7 +124,7 @@ class Model(typing.Generic[StateT]):
                 child_node.event.emit(child_value)
                 self.__fire_all_child_events(child_node, child_value)
             except:
-                logging.getLogger(__name__).warning(traceback.format_exc())
+                logging.getLogger(__name__).info(traceback.format_exc())
 
     def update(self, *args, **kwargs: typing.Any):
         func: typing.Callable[[StateT], None]

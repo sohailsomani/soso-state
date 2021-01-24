@@ -1,6 +1,6 @@
 import typing
 
-from soso.event import EventToken
+from soso.event import Event, EventToken
 
 StateT = typing.TypeVar('StateT', covariant=True)
 StateT2 = typing.TypeVar('StateT2',contravariant=True)
@@ -27,14 +27,11 @@ class Model(typing.Generic[StateT]):
     def state(self) -> StateT:
         ...
 
-    @typing.overload
     def subscribe(self,
                   property:PropertyCallback[StateT],
                   callback:EventCallback) -> EventToken:
         ...
 
-    @typing.overload
-    def subscribe(self,
-                  properties:typing.List[PropertyCallback[StateT]],
-                  callback:EventCallback) -> EventToken:
+    def event(self,
+              property:PropertyCallback[StateT]) -> Event:
         ...

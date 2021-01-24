@@ -70,8 +70,8 @@ app.update(pam_gets_married)
 app.update(regional_managers = [Person("Jim","Halpert")])
 # No output, since no longer interested
 
-# Subscribe to multiple values at the same time, 
-# notified once when one or more change at the same time
+# TODO: Subscribe to multiple values at the same time, 
+# notified only once when one or more change at the same time
 app.subscribe(lambda state: state.regional_managers,
               lambda state: state.employees,
               print)
