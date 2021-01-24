@@ -43,7 +43,7 @@ class TestREADME(unittest.TestCase):
 
         x: AppState
         mock = MagicMock()
-        app.subscribe(lambda x: x.regional_managers[0], mock)
+        token = app.subscribe(lambda x: x.regional_managers[0], mock)
         mock.assert_called_with(Person("Michael", "Scott"))
 
         def pam_gets_married(state: AppState) -> None:
@@ -52,3 +52,9 @@ class TestREADME(unittest.TestCase):
         app.update(pam_gets_married)
 
         self.assertEqual(app.state.employees[1].last_name, "Halpert")
+
+        mock.reset_mock()
+        app.update(regional_managers = [Person("Dwight","Schrute")],
+                   assistant_to_the_regional_managers = [])
+
+        mock.assert_called_with(Person("Dwight","Schrute"))

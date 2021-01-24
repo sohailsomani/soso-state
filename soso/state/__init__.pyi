@@ -11,7 +11,7 @@ class PropertyCallback(typing.Generic[StateT2],
         ...
 
 class EventCallback(typing.Protocol):
-    def __call__(self,*args:typing.Any) -> None:
+    def __call__(self,*args:typing.Any) -> typing.Optional[typing.Any]:
         ...
 
 class Model(typing.Generic[StateT]):

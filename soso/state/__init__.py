@@ -1,6 +1,8 @@
+import logging
+import traceback
 import typing
 from collections import defaultdict
-from dataclasses import dataclass, is_dataclass
+from dataclasses import dataclass, field, is_dataclass
 from enum import Enum
 
 from soso.event import Event, EventToken
@@ -17,14 +19,53 @@ class PropertyCallback(typing.Generic[StateT2], typing.Protocol):
 
 
 class EventCallback(typing.Protocol):
-    def __call__(self, *args: typing.Any) -> None:
+    def __call__(self, *args: typing.Any) -> typing.Optional[typing.Any]:
         ...
 
 
+class AttributeAccess(Enum):
+    SETATTR = 1
+    GETATTR = 2
+    SETITEM = 3
+    GETITEM = 4
+
+
+@dataclass
+class PropertyOp:
+    access: AttributeAccess
+    key: typing.Any
+    value: typing.Optional[typing.Any] = None
+
+    def execute(self, obj) -> typing.Optional[typing.Any]:
+        if self.access == AttributeAccess.GETATTR:
+            return getattr(obj, self.key)
+        elif self.access == AttributeAccess.GETITEM:
+            return obj[self.key]
+        elif self.access == AttributeAccess.SETATTR:
+            setattr(obj, self.key, self.value)
+            return None
+        else:
+            assert self.access == AttributeAccess.SETITEM
+            obj[self.key] = self.value
+            return None
+
+    def get_value(self, obj) -> typing.Any:
+        if self.access in [AttributeAccess.GETATTR, AttributeAccess.SETATTR]:
+            return getattr(obj, self.key)
+        else:
+            assert self.access in [
+                AttributeAccess.GETITEM, AttributeAccess.SETITEM
+            ]
+            return obj[self.key]
+
+
+@dataclass
 class Node:
-    def __init__(self):
-        self.children: typing.DefaultDict[str, Node] = defaultdict(Node)
-        self.event: Event = Event('NodeUpdateEvent')
+    children: typing.DefaultDict[str, "Node"] = field(
+        default_factory=lambda: defaultdict(Node))
+    event:Event = field(default_factory=lambda: Event("NodeUpdateEvent"))
+    # The type of access to this node
+    op: typing.Optional[PropertyOp] = None
 
 
 class Model(typing.Generic[StateT]):
@@ -35,17 +76,18 @@ class Model(typing.Generic[StateT]):
         self.__current_state = state_klass()
         self.__root = Node()
 
-    def __getNodeForPath(self, ops: typing.List["PropertyOp"]) -> Node:
+    def __get_node_for_ops(self, ops: typing.List[PropertyOp]) -> Node:
         root: Node = self.__root
         children = []
         for op in ops:
             child = op.key
             children.append(str(child))
             root = root.children[child]
+            root.op = op
         root.event._name = ".".join(children)
         return root
 
-    def __getValueForPath(self, ops: typing.List["PropertyOp"]) -> Node:
+    def __get_value_for_ops(self, ops: typing.List[PropertyOp]) -> Node:
         root: typing.Any = self.__current_state
         for op in ops:
             root = op.get_value(root)
@@ -66,14 +108,24 @@ class Model(typing.Generic[StateT]):
         func(proxy)  # type: ignore
         ops = _get_ops(proxy)
 
-        node = self.__getNodeForPath(ops)
+        node = self.__get_node_for_ops(ops)
         token = node.event.connect(callback, Event.Group.PROCESS)
 
-        value = self.__getValueForPath(ops)
+        value = self.__get_value_for_ops(ops)
         # call with the initial value
         callback(value)
 
         return token
+
+    def __fire_all_child_events(self, node: Node, parent: typing.Any) -> None:
+        for name, child_node in node.children.items():
+            try:
+                assert child_node.op is not None
+                child_value = child_node.op.get_value(parent)
+                child_node.event.emit(child_value)
+                self.__fire_all_child_events(child_node, child_value)
+            except:
+                logging.getLogger(__name__).warning(traceback.format_exc())
 
     def update(self, *args, **kwargs: typing.Any):
         func: typing.Callable[[StateT], None]
@@ -97,56 +149,33 @@ class Model(typing.Generic[StateT]):
         ops = _get_ops(proxy)
         obj = self.__current_state
 
-        stmts: typing.List[typing.List["PropertyOp"]] = [[]]
+        stmts: typing.List[typing.List[PropertyOp]] = [[]]
         for op in ops:
             stmts[-1].append(op)
             obj = op.execute(obj)
             # end of statement
             if obj is None:
                 obj = self.__current_state
+                stmts.append([])
 
         for stmt in stmts:
-            # if foo.bar.baz[0].blah is modified then we need to signal foo,
+            # if foo.bar.baz[0] is modified then we need to signal foo,
             # foo.bar, foo.bar[0], foo.bar.baz[0].blah
-            print(stmt)
+
+            # so first we signal foo, foo.bar, foo.bar.baz, foo.bar.baz[0]
+            # then we signal everything under foo.bar.baz[0]
+            curr = []
+            for op in stmt:
+                curr.append(op)
+                node = self.__get_node_for_ops(curr)
+                value = self.__get_value_for_ops(curr)
+                node.event.emit(value)
+            # Now everything below node
+            self.__fire_all_child_events(node, value)
 
     @property
     def state(self) -> StateT:
         return self.__current_state
-
-
-class AttributeAccess(Enum):
-    SETATTR = 1
-    GETATTR = 2
-    SETITEM = 3
-    GETITEM = 4
-
-@dataclass
-class PropertyOp:
-    access: AttributeAccess
-    key: typing.Any
-    value: typing.Optional[typing.Any] = None
-
-    def execute(self,obj) -> typing.Optional[typing.Any]:
-        if self.access  == AttributeAccess.GETATTR:
-            return getattr(obj,self.key)
-        elif self.access == AttributeAccess.GETITEM:
-            return obj[self.key]
-        elif self.access == AttributeAccess.SETATTR:
-            setattr(obj,self.key,self.value)
-            return None
-        else:
-            assert self.access == AttributeAccess.SETITEM
-            obj[self.key] = self.value
-            return None
-
-    def get_value(self,obj) -> typing.Any:
-        if self.access in [AttributeAccess.GETATTR,AttributeAccess.SETATTR]:
-            return getattr(obj,self.key)
-        else:
-            assert self.access in [AttributeAccess.GETITEM,
-                                   AttributeAccess.SETITEM]
-            return obj[self.key]
 
 
 class Proxy:
@@ -155,25 +184,19 @@ class Proxy:
 
     def __setattr__(self, name: str, value: typing.Any) -> None:
         self.__dict__['__ops'].append(
-            PropertyOp(AttributeAccess.SETATTR,
-                       name,value)
-        )
+            PropertyOp(AttributeAccess.SETATTR, name, value))
 
     def __getattr__(self, name: str) -> "Proxy":
-        self.__dict__['__ops'].append(
-            PropertyOp(AttributeAccess.GETATTR,name)
-        )
+        self.__dict__['__ops'].append(PropertyOp(AttributeAccess.GETATTR,
+                                                 name))
         return self
 
     def __setitem__(self, key, value) -> None:
         self.__dict__['__ops'].append(
-            PropertyOp(AttributeAccess.SETITEM,key,value)
-        )
+            PropertyOp(AttributeAccess.SETITEM, key, value))
 
     def __getitem__(self, key) -> "Proxy":
-        self.__dict__['__ops'].append(
-            PropertyOp(AttributeAccess.GETITEM,key)
-        )
+        self.__dict__['__ops'].append(PropertyOp(AttributeAccess.GETITEM, key))
         return self
 
 
