@@ -1,4 +1,3 @@
-import datetime as dt
 import typing
 from collections import defaultdict
 from dataclasses import is_dataclass
@@ -116,7 +115,7 @@ class Model(typing.Generic[StateT]):
         props: typing.List[typing.List[typing.Any]] = [[]]
         it = iter(path)
         for op in it:
-            assert isinstance(op,AttributeAccess)
+            assert isinstance(op, AttributeAccess)
             props[-1].append(op)
             # setattr/setitem means end of a statement, so the next operation
             # would occur only on the root object.
