@@ -94,8 +94,6 @@ class Model(typing.Generic[StateT]):
 
         proxy = Proxy()
         func(proxy)
-        # TODO: modify _get_proxy_path to return a better structured list of
-        # objects for readability
         ops = _get_ops(proxy)
         obj = self.__current_state
 
