@@ -40,6 +40,7 @@ class Model(typing.Generic[StateT]):
         root: Node = self.__root
         children = []
         for op in it:
+            assert isinstance(op, AttributeAccess)
             if op in [AttributeAccess.SETATTR, AttributeAccess.SETITEM]:
                 child = next(it)
                 next(it)
@@ -56,6 +57,7 @@ class Model(typing.Generic[StateT]):
         it = iter(path)
         root: typing.Any = self.__current_state
         for op in it:
+            assert isinstance(op, AttributeAccess)
             if op in [AttributeAccess.SETATTR, AttributeAccess.GETATTR]:
                 child = next(it)
                 root = getattr(root, child)
@@ -84,6 +86,7 @@ class Model(typing.Generic[StateT]):
         token = node.event.connect(callback, Event.Group.PROCESS)
 
         value = self.__getValueForPath(path)
+        # call with the initial value
         callback(value)
 
         return token
@@ -108,7 +111,7 @@ class Model(typing.Generic[StateT]):
         proxy = Proxy()
         func(proxy)
         # TODO: modify _get_proxy_path to return a better structured list of
-        # objects
+        # objects for readability
         path = _get_proxy_path(proxy)
         obj = self.__current_state
 
