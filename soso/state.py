@@ -36,24 +36,24 @@ class PropertyOp:
     key: typing.Any
     value: typing.Optional[typing.Any] = None
 
-    def execute(self, obj) -> typing.Tuple[typing.Optional[typing.Any],bool]:
+    def execute(self, obj) -> typing.Tuple[typing.Optional[typing.Any], bool]:
         if self.access == AttributeAccess.GETATTR:
-            return getattr(obj, self.key),False
+            return getattr(obj, self.key), False
         elif self.access == AttributeAccess.GETITEM:
-            return obj[self.key],False
+            return obj[self.key], False
         elif self.access == AttributeAccess.SETATTR:
-            curr_value = getattr(obj,self.key)
+            curr_value = getattr(obj, self.key)
             changed = curr_value != self.value
             if changed:
                 setattr(obj, self.key, self.value)
-            return None,changed
+            return None, changed
         else:
             assert self.access == AttributeAccess.SETITEM
             curr_value = obj[self.key]
             changed = curr_value != self.value
             if changed:
                 obj[self.key] = self.value
-            return None,changed
+            return None, changed
 
     def get_value(self, obj) -> typing.Any:
         if self.access in [AttributeAccess.GETATTR, AttributeAccess.SETATTR]:
@@ -165,7 +165,7 @@ class Model(typing.Generic[StateT]):
         stmts: typing.List[typing.List[PropertyOp]] = [[]]
         for op in ops:
             stmts[-1].append(op)
-            obj,changed = op.execute(obj)
+            obj, changed = op.execute(obj)
             # end of statement
             if obj is None:
                 obj = self.__current_state
