@@ -2,9 +2,22 @@ import typing
 from dataclasses import is_dataclass
 from enum import Enum
 
+from soso.event import EventToken
+
 __all__ = ('Model')
 
 StateT = typing.TypeVar('StateT', covariant=True)
+StateT2 = typing.TypeVar('StateT2', contravariant=True)
+
+
+class PropertyCallback(typing.Generic[StateT2], typing.Protocol):
+    def __call__(self, state: StateT2) -> typing.Any:
+        ...
+
+
+class EventCallback(typing.Protocol):
+    def __call__(self, *args: typing.Any) -> None:
+        ...
 
 
 class Model(typing.Generic[StateT]):
@@ -13,6 +26,11 @@ class Model(typing.Generic[StateT]):
         self.__state_klass = state_klass = typing.get_args(model_klass)[0]
         assert is_dataclass(state_klass)
         self.__current_state = state_klass()
+
+    def subscribe(self, property: typing.Union[
+        PropertyCallback[StateT], typing.List[PropertyCallback[StateT]]],
+                  callback: EventCallback) -> EventToken:
+        pass
 
     def update(self, *args, **kwargs: typing.Any):
         func: typing.Callable[[StateT], None]
