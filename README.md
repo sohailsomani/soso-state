@@ -8,14 +8,14 @@ portion of the application state tree.
 ## Main Features
 
 * Centralized:
-** Single source of truth for entire application state
-** Easily implement undo/redo/persistence
+ * Single source of truth for entire application state
+ * Easily implement undo/redo/persistence
 * Flexible:
-** Subscribe to changes in any subset of the application state you are interested in
+ * Subscribe to changes in any subset of the application state you are interested in
 * Efficient
-** Zero copying except for snapshot/restore functionality
+ * Zero copying except for snapshot/restore functionality
 * Predictable:
-** Consistent state => predictable application
+ * Consistent state => predictable application
 
 ## Quickstart
 
