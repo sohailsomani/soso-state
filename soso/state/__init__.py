@@ -39,8 +39,10 @@ class Model(typing.Generic[StateT]):
 
         while path:
             op = path.pop()
+            # setattr/setitem means end of a statement, so the next operation
+            # would occur only on the root object.
             if op == AttributeAccess.SETATTR:
-                setattr(obj,path.pop(),path.pop())
+                setattr(obj, path.pop(), path.pop())
                 obj = self.__current_state
             elif op == AttributeAccess.SETITEM:
                 obj[path.pop()] = path.pop()
@@ -49,7 +51,7 @@ class Model(typing.Generic[StateT]):
                 obj = obj[path.pop()]
             else:
                 assert op == AttributeAccess.GETATTR
-                obj = getattr(obj,path.pop())
+                obj = getattr(obj, path.pop())
 
     @property
     def state(self) -> StateT:

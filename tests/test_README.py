@@ -40,10 +40,9 @@ class TestREADME(unittest.TestCase):
                          [Person("Jim", "Halpert"),
                           Person("Pam", "Beesly")])
 
-        def pam_gets_married(state:AppState):
+        def pam_gets_married(state: AppState) -> None:
             state.employees[1].last_name = "Halpert"
 
         app.update(pam_gets_married)
 
-        self.assertEqual(app.state.employees[1].last_name,
-                         "Halpert")
+        self.assertEqual(app.state.employees[1].last_name, "Halpert")
