@@ -2,7 +2,8 @@
 
 `soso.state` is a Python 3.8+ implementation of a general state container
 pattern. Its goal is to centralize application state similar to Redux but allow
-efficient monitoring and updating of any portion of the application state tree.
+a reasonable efficiency/dev time tradeoff for monitoring and updating of any
+portion of the application state tree.
 
 With `soso.state`, you describe the shape of any portion of your state and
 compose it as needed for a particular application. Less time spent thinking
@@ -77,8 +78,7 @@ app.subscribe(lambda state: state.regional_managers,
 
 * Intuitive (hopefully) syntax
 * Compose state and model behaviour
-* Potentially as efficient, if not more efficient than hand-written code, with
-  fewer bugs and way less code
+* Designed to optimize for dev time on happy path
 * No cloning of state
 * Sensible default behaviour
 * Judicious use of Python typing to catch errors as early as possible
