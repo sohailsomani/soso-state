@@ -5,11 +5,6 @@ pattern. Its goal is to centralize application state similar to Redux but allow
 a reasonable efficiency/dev time tradeoff for monitoring and updating of any
 portion of the application state tree.
 
-With `soso.state`, you describe the shape of any portion of your state and
-compose it as needed for a particular application. Less time spent thinking
-about boilerplate means more time spent thinking about the actual business
-problem.
-
 ## Main Features
 
 * Single source of truth for entire application state
