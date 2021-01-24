@@ -1,6 +1,7 @@
 import typing
 import unittest
 from dataclasses import dataclass, field
+from unittest.mock import MagicMock
 
 from soso import state
 
@@ -39,6 +40,11 @@ class TestREADME(unittest.TestCase):
         self.assertEqual(app.state.employees,
                          [Person("Jim", "Halpert"),
                           Person("Pam", "Beesly")])
+
+        # x: AppState
+        # mock = MagicMock()
+        # token = app.subscribe(lambda x: x.regional_managers[0], mock)
+        # mock.assert_called_with(Person("Michael","Scott"))
 
         def pam_gets_married(state: AppState) -> None:
             state.employees[1].last_name = "Halpert"

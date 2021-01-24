@@ -6,7 +6,6 @@ __all__ = ('Model')
 
 StateT = typing.TypeVar('StateT', covariant=True)
 
-
 class Model(typing.Generic[StateT]):
     def __init__(self):
         model_klass = self.__orig_bases__[-1]
