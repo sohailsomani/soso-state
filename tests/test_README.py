@@ -1,10 +1,9 @@
 import typing
 import unittest
 from dataclasses import dataclass, field
+from unittest.mock import MagicMock
 
 from soso import state
-
-# from unittest.mock import MagicMock
 
 
 @dataclass
@@ -42,9 +41,9 @@ class TestREADME(unittest.TestCase):
                          [Person("Jim", "Halpert"),
                           Person("Pam", "Beesly")])
 
-        # x: AppState
-        # mock = MagicMock()
-        # token = app.subscribe(lambda x: x.regional_managers[0], mock)
+        x: AppState
+        mock = MagicMock()
+        token = app.subscribe(lambda x: x.regional_managers[0], mock)
         # mock.assert_called_with(Person("Michael", "Scott"))
 
         def pam_gets_married(state: AppState) -> None:
