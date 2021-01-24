@@ -176,6 +176,7 @@ class Model(typing.Generic[StateT]):
             self.__fire_all_child_events(node, value)
 
     @property
+    # TODO: this should return a read-only view to avoid accidents
     def state(self) -> StateT:
         return self.__current_state
 

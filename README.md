@@ -12,11 +12,14 @@ problem.
 
 ## Main Features
 
+* Keep all application state in a single place
+* Subscribe to changes in any subset of the application state you are interested
+  in without loss of generality
 * Intuitive (hopefully) syntax
-* Compose state and model behaviour
-* Designed to optimize for dev time on happy path
+* Optimized for dev time, with a trapdoor to make things super efficient if
+  needed
 * Zero copying except for...
-* Snapshot/restore functionality built in for time travel debugging
+* ...Snapshot/restore functionality built in for time travel debugging
 * Sensible default behaviour
 * Judicious use of Python typing to catch errors as early as possible
 
