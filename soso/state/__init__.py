@@ -1,4 +1,4 @@
-import collections
+import datetime as dt
 import typing
 from collections import defaultdict
 from dataclasses import is_dataclass
@@ -21,11 +21,13 @@ class EventCallback(typing.Protocol):
     def __call__(self, *args: typing.Any) -> None:
         ...
 
+
 class Node:
     def __init__(self):
-        self.children:typing.DefaultDict[str,Node] = defaultdict(Node)
-        self.data:Event = Event('NodeUpdateEvent')
-        self.timestamp:typing.Optional[dt.datetime] = None
+        self.children: typing.DefaultDict[str, Node] = defaultdict(Node)
+        self.data: Event = Event('NodeUpdateEvent')
+        self.timestamp: typing.Optional[dt.datetime] = None
+
 
 class Model(typing.Generic[StateT]):
     def __init__(self):
@@ -49,7 +51,7 @@ class Model(typing.Generic[StateT]):
             path = tuple(_get_proxy_path(proxy))
             paths.append(path)
 
-        tup = tuple(paths)
+        # tup = tuple(paths)
         # event = self.__events[tup]  # type: ignore
         # print(event)
 

@@ -43,7 +43,7 @@ class TestREADME(unittest.TestCase):
 
         x: AppState
         mock = MagicMock()
-        token = app.subscribe(lambda x: x.regional_managers[0], mock)
+        app.subscribe(lambda x: x.regional_managers[0], mock)
         # mock.assert_called_with(Person("Michael", "Scott"))
 
         def pam_gets_married(state: AppState) -> None:
