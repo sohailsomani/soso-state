@@ -59,7 +59,9 @@ app.update(regional_managers = [Person("Dwight","Schrute")],
 # No longer interested in regional_manager updates
 token.disconnect()
 
-# For more complex state updates, use a function
+# For more complex state updates, use a function. Note that
+# this is NOT the actual state object, it is a write-only proxy.
+# Do not try to read from the argument that is passed in
 def pam_gets_married(state:AppState):
    state.employees[1].last_name = "Halpert"
 app.update(pam_gets_married)
