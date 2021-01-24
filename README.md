@@ -1,9 +1,11 @@
 # soso.state
 
 `soso.state` is a Python 3.8+ implementation of a general state container
-pattern. Its goal is to centralize application state similar to Redux but allow
-developers to have a reduced focus on performance or ceremony and a higher focus
-on problem solving.
+pattern. Its goals are similar to Redux, but where it differs is that it
+is designed to perform well by default through the use of little to no 
+copying and a focus on finely grained access to any subset of the
+application state.
+
 
 ## Main Features
 
