@@ -1,32 +1,10 @@
 import typing
 from dataclasses import is_dataclass
-from unittest.mock import MagicMock, Mock
+from enum import Enum
 
 __all__ = ('Model')
 
 StateT = typing.TypeVar('StateT', covariant=True)
-
-
-def _get_attrs_set(mock,ignored_attrs):
-    stack = [mock]
-    path = []
-    visited = set()
-    attrs_set = []
-
-    while stack:
-        s = stack.pop()
-        if id(s) not in visited:
-            visited.add(id(s))
-        path.append(s)
-        if isinstance(s, Mock):
-            attrs = set(dir(s)) - ignored_attrs
-            stack.extend(attrs)
-        else:
-            value = getattr(path[-2], s)
-            attrs_set.extend(path + [value])
-            path.pop()
-
-    return attrs_set
 
 
 class Model(typing.Generic[StateT]):
@@ -35,7 +13,6 @@ class Model(typing.Generic[StateT]):
         self.__state_klass = state_klass = typing.get_args(model_klass)[0]
         assert is_dataclass(state_klass)
         self.__current_state = state_klass()
-        self.__default_attrs = set(dir(MagicMock()) + ["__str__"])
 
     def update(self, *args, **kwargs: typing.Any):
         func: typing.Callable[[StateT], None]
@@ -54,12 +31,59 @@ class Model(typing.Generic[StateT]):
             assert callable(args[0])
             func = args[0]
 
-        # TODO: Use a more relevant mock library that doesn't have edge cases
-        # like "name" properties
-        mock = MagicMock()
-        func(mock)
-        attrs_set = _get_attrs_set(mock,self.__default_attrs)
+        proxy = Proxy()
+        func(proxy)
+        path = _get_proxy_path(proxy)
+        path.reverse()
+        obj = self.__current_state
+
+        while path:
+            op = path.pop()
+            if op == AttributeAccess.SETATTR:
+                setattr(obj,path.pop(),path.pop())
+                obj = self.__current_state
+            elif op == AttributeAccess.SETITEM:
+                obj[path.pop()] = path.pop()
+                obj = self.__current_state
+            elif op == AttributeAccess.GETITEM:
+                obj = obj[path.pop()]
+            else:
+                assert op == AttributeAccess.GETATTR
+                obj = getattr(obj,path.pop())
 
     @property
     def state(self) -> StateT:
         return self.__current_state
+
+
+class AttributeAccess(Enum):
+    SETATTR = 1
+    GETATTR = 2
+    SETITEM = 3
+    GETITEM = 4
+
+
+class Proxy:
+    def __init__(self):
+        self.__dict__['__path'] = []
+
+    def __setattr__(self, name: str, value: typing.Any) -> None:
+        self.__dict__['__path'].extend([AttributeAccess.SETATTR, name, value])
+
+    def __getattr__(self, name: str) -> "Proxy":
+        self.__dict__['__path'].extend([AttributeAccess.GETATTR, name])
+        return self
+
+    def __setitem__(self, key, value) -> None:
+        self.__dict__['__path'].extend([AttributeAccess.SETITEM, key, value])
+
+    def __getitem__(self, key) -> "Proxy":
+        self.__dict__['__path'].extend([
+            AttributeAccess.GETITEM,
+            key  # type: ignore
+        ])
+        return self
+
+
+def _get_proxy_path(proxy: Proxy):
+    return proxy.__dict__['__path']

@@ -43,7 +43,6 @@ class TestREADME(unittest.TestCase):
         def pam_gets_married(state:AppState):
             state.employees[1].last_name = "Halpert"
 
-        print("****HELLO")
         app.update(pam_gets_married)
 
         self.assertEqual(app.state.employees[1].last_name,
