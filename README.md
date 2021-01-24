@@ -34,12 +34,14 @@ class AppState:
 class AppModel(state.Model[AppState]):
   pass
   
-app = AppModel(AppState(
+app = AppModel()
+
+app.update(
   regional_managers = [Person("Michael","Scott")],
   assistant_to_the_regional_managers = [Person("Dwight","Schrute")],
   employees = [Person("Jim","Halpert"),
                Person("Pam","Beesly")] 
-))
+)
 
 # Subscribe to changes in the 0th position of the regional_managers array.
 # The callback function is always called initially with the current values
