@@ -95,7 +95,10 @@ async def myfunc(app:AppModel):
   print(regional_managers)
 
 asyncio.get_event_loop().create_task(myfunc(app))
-# Output: [Person("Jim","Halpert")]
+# No output yet
+app.update(regional_managers = [Person("Pam","Halpert")],
+           employees=[])
+# Output: [Person("Pam","Halpert")]
 ```
 
 ## Motivation
