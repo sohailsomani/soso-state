@@ -164,6 +164,7 @@ class Model(typing.Generic[StateT]):
                 stmts.append([])
 
         for stmt in stmts:
+            if not stmt: continue
             # if foo.bar.baz[0] is modified then we need to signal foo,
             # foo.bar, foo.bar, foo.bar.baz[0], and then everything
             # below foo.bar.baz[0]
