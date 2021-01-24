@@ -49,8 +49,11 @@ class PropertyOp:
             return None, changed
         else:
             assert self.access == AttributeAccess.SETITEM
-            curr_value = obj[self.key]
-            changed = curr_value != self.value
+            try:
+                curr_value = obj[self.key]
+                changed = curr_value != self.value
+            except KeyError:
+                changed = True
             if changed:
                 obj[self.key] = self.value
             return None, changed

@@ -1,5 +1,6 @@
+import typing
 import unittest
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from unittest.mock import MagicMock
 
 from soso import state
@@ -8,6 +9,7 @@ from soso import state
 @dataclass
 class State:
     value: int = 0
+    d: typing.Dict[str, str] = field(default_factory=dict)
 
 
 class Model(state.Model[State]):
@@ -57,3 +59,27 @@ class TestModel(unittest.TestCase):
         mock.assert_not_called()
         model.update(value=0)
         mock.assert_not_called()
+
+    def test_dict(self) -> None:
+        model = Model()
+
+        mock = MagicMock()
+        # doesn't exist yet, so can't listen to it
+        self.assertRaises(KeyError,
+                          lambda: model.subscribe(lambda x: x.d["key"], mock))
+        mock.assert_not_called()
+
+        def update(state:State):
+            state.d["key"] = "value"
+
+        model.update(update)
+        mock.reset_mock()
+        model.subscribe(lambda x: x.d["key"],mock)
+        mock.assert_called_with("value")
+
+        def update2(state:State):
+            state.d["key"] = "value2"
+
+        mock.reset_mock()
+        model.update(update2)
+        mock.assert_called_with("value2")
