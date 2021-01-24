@@ -165,7 +165,6 @@ class Model(typing.Generic[StateT]):
                 obj = self.__current_state
                 stmts.append([])
 
-        # Emit events
         if stmts[-1] == []:
             stmts.pop()
 
@@ -175,6 +174,7 @@ class Model(typing.Generic[StateT]):
         # Always emit root event
         self.__root.event.emit(self.__current_state)
         for stmt in stmts:
+            assert stmt
             # if foo.bar.baz[0] is modified then we need to signal foo,
             # foo.bar, foo.bar, foo.bar.baz[0], and then everything
             # below foo.bar.baz[0]
