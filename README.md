@@ -6,6 +6,11 @@ is designed to perform well by default through the use of little to no
 copying and a focus on finely grained access to any subset of the
 application state.
 
+## Status
+
+Although this particular library is new, multiple versions of it are 
+in production in private in a variety of industries ranging from healthcare
+to finance.
 
 ## Main Features
 
