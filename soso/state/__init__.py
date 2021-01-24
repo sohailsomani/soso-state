@@ -25,8 +25,7 @@ class EventCallback(typing.Protocol):
 class Node:
     def __init__(self):
         self.children: typing.DefaultDict[str, Node] = defaultdict(Node)
-        self.data: Event = Event('NodeUpdateEvent')
-        self.timestamp: typing.Optional[dt.datetime] = None
+        self.event: Event = Event('NodeUpdateEvent')
 
 
 class Model(typing.Generic[StateT]):
@@ -37,6 +36,38 @@ class Model(typing.Generic[StateT]):
         self.__current_state = state_klass()
         self.__root = Node()
 
+    def __getNodeForPath(self, path: typing.List[typing.Any]) -> Node:
+        path = path[::-1]
+        root: Node = self.__root
+        children = []
+        while path:
+            op = path.pop()
+            if op in [AttributeAccess.SETATTR, AttributeAccess.SETITEM]:
+                child = path.pop()
+                path.pop()
+                assert len(path) == 0
+            else:
+                assert op in [AttributeAccess.GETITEM, AttributeAccess.GETATTR]
+                child = path.pop()
+            children.append(str(child))
+            root = root.children[child]
+        root.event._name = ".".join(children)
+        return root
+
+    def __getValueForPath(self, path: typing.List[typing.Any]) -> Node:
+        path = path[::-1]
+        root: typing.Any = self.__current_state
+        while path:
+            op = path.pop()
+            if op in [AttributeAccess.SETATTR, AttributeAccess.GETATTR]:
+                child = path.pop()
+                root = getattr(root, child)
+            else:
+                assert op in [AttributeAccess.SETITEM, AttributeAccess.GETITEM]
+                child = path.pop()
+                root = root[child]
+        return root
+
     def subscribe(self,
                   props: typing.Union[PropertyCallback[StateT],
                                       typing.List[PropertyCallback[StateT]]],
@@ -44,16 +75,21 @@ class Model(typing.Generic[StateT]):
         if not isinstance(props, list):
             props = [props]
 
-        paths: typing.List[typing.Any] = []
-        for func in props:
-            proxy = Proxy()
-            func(proxy)  # type: ignore
-            path = tuple(_get_proxy_path(proxy))
-            paths.append(path)
+        # we don't yet handle subscribing to multiple properties
+        assert len(props) == 1
 
-        # tup = tuple(paths)
-        # event = self.__events[tup]  # type: ignore
-        # print(event)
+        func = props[0]
+        proxy = Proxy()
+        func(proxy)  # type: ignore
+        path = _get_proxy_path(proxy)
+
+        node = self.__getNodeForPath(path)
+        token = node.event.connect(callback, Event.Group.PROCESS)
+
+        value = self.__getValueForPath(path)
+        callback(value)
+
+        return token
 
     def update(self, *args, **kwargs: typing.Any):
         func: typing.Callable[[StateT], None]
@@ -74,7 +110,8 @@ class Model(typing.Generic[StateT]):
 
         proxy = Proxy()
         func(proxy)
-        # TODO: modify _get_proxy_path to return better structured objects
+        # TODO: modify _get_proxy_path to return a better structured list of
+        # objects
         path = _get_proxy_path(proxy)
         obj = self.__current_state
 
