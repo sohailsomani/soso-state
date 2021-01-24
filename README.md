@@ -10,7 +10,7 @@ application state.
 
 Although this particular library is new, multiple versions of it are 
 in production in private in a variety of industries ranging from healthcare
-to finance.
+to finance. See the Motivation section below.
 
 ## Main Features
 
