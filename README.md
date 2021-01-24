@@ -15,7 +15,6 @@ problem.
 * Single source of truth for entire application state
 * Subscribe to changes in any subset of the application state you are interested
   in without loss of generality
-* Intuitive (hopefully) syntax
 * Optimized for dev time, with a trapdoor to make things super efficient if
   needed
 * Zero copying except for...
