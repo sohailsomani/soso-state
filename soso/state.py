@@ -149,11 +149,13 @@ class Model(typing.Generic[StateT]):
             assert callable(args[0])
             func = args[0]
 
+        # Get all changes
         proxy = Proxy()
         func(proxy)
         ops = _get_ops(proxy)
         obj = self.__current_state
 
+        # Apply changes tos tate
         stmts: typing.List[typing.List[PropertyOp]] = [[]]
         for op in ops:
             stmts[-1].append(op)
@@ -162,6 +164,8 @@ class Model(typing.Generic[StateT]):
             if obj is None:
                 obj = self.__current_state
                 stmts.append([])
+
+        # Emit events
 
         # Always emit root event
         self.__root.event.emit(self.__current_state)
