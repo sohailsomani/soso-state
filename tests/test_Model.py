@@ -69,15 +69,15 @@ class TestModel(unittest.TestCase):
                           lambda: model.subscribe(lambda x: x.d["key"], mock))
         mock.assert_not_called()
 
-        def update(state:State):
+        def update(state: State) -> None:
             state.d["key"] = "value"
 
         model.update(update)
         mock.reset_mock()
-        model.subscribe(lambda x: x.d["key"],mock)
+        model.subscribe(lambda x: x.d["key"], mock)
         mock.assert_called_with("value")
 
-        def update2(state:State):
+        def update2(state: State) -> None:
             state.d["key"] = "value2"
 
         mock.reset_mock()
