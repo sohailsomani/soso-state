@@ -12,7 +12,7 @@ problem.
 
 ## Main Features
 
-* Keep all application state in a single place
+* Single source of truth for entire application state
 * Subscribe to changes in any subset of the application state you are interested
   in without loss of generality
 * Intuitive (hopefully) syntax
