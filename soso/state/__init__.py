@@ -158,10 +158,7 @@ class Model(typing.Generic[StateT]):
 
         for stmt in stmts:
             # if foo.bar.baz[0] is modified then we need to signal foo,
-            # foo.bar, foo.bar[0], foo.bar.baz[0].blah
-
-            # so first we signal foo, foo.bar, foo.bar.baz, foo.bar.baz[0]
-            # then we signal everything under foo.bar.baz[0]
+            # foo.bar, foo.bar[0], and then everything below foo.bar.baz[0]
             curr = []
             for op in stmt:
                 curr.append(op)
