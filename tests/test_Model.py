@@ -46,3 +46,14 @@ class TestModel(unittest.TestCase):
         model.update(value=12)
         mock.assert_called_with(State(value=12))
 
+    def test_no_change_no_update(self) -> None:
+        model = Model()
+        mock = MagicMock()
+
+        model.subscribe(lambda x: x.value, mock)
+        mock.assert_called_with(0)
+
+        mock.reset_mock()
+        mock.assert_not_called()
+        model.update(value=0)
+        mock.assert_not_called()
