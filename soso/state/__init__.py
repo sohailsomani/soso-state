@@ -1,6 +1,6 @@
 import typing
 from collections import defaultdict
-from dataclasses import is_dataclass
+from dataclasses import dataclass, is_dataclass
 from enum import Enum
 
 from soso.event import Event, EventToken
@@ -35,36 +35,20 @@ class Model(typing.Generic[StateT]):
         self.__current_state = state_klass()
         self.__root = Node()
 
-    def __getNodeForPath(self, path: typing.List[typing.Any]) -> Node:
-        it = iter(path)
+    def __getNodeForPath(self, ops: typing.List["PropertyOp"]) -> Node:
         root: Node = self.__root
         children = []
-        for op in it:
-            assert isinstance(op, AttributeAccess)
-            if op in [AttributeAccess.SETATTR, AttributeAccess.SETITEM]:
-                child = next(it)
-                next(it)
-                assert len(path) == 0
-            else:
-                assert op in [AttributeAccess.GETITEM, AttributeAccess.GETATTR]
-                child = next(it)
+        for op in ops:
+            child = op.key
             children.append(str(child))
             root = root.children[child]
         root.event._name = ".".join(children)
         return root
 
-    def __getValueForPath(self, path: typing.List[typing.Any]) -> Node:
-        it = iter(path)
+    def __getValueForPath(self, ops: typing.List["PropertyOp"]) -> Node:
         root: typing.Any = self.__current_state
-        for op in it:
-            assert isinstance(op, AttributeAccess)
-            if op in [AttributeAccess.SETATTR, AttributeAccess.GETATTR]:
-                child = next(it)
-                root = getattr(root, child)
-            else:
-                assert op in [AttributeAccess.SETITEM, AttributeAccess.GETITEM]
-                child = next(it)
-                root = root[child]
+        for op in ops:
+            root = op.get_value(root)
         return root
 
     def subscribe(self,
@@ -80,12 +64,12 @@ class Model(typing.Generic[StateT]):
         func = props[0]
         proxy = Proxy()
         func(proxy)  # type: ignore
-        path = _get_proxy_path(proxy)
+        ops = _get_ops(proxy)
 
-        node = self.__getNodeForPath(path)
+        node = self.__getNodeForPath(ops)
         token = node.event.connect(callback, Event.Group.PROCESS)
 
-        value = self.__getValueForPath(path)
+        value = self.__getValueForPath(ops)
         # call with the initial value
         callback(value)
 
@@ -112,38 +96,21 @@ class Model(typing.Generic[StateT]):
         func(proxy)
         # TODO: modify _get_proxy_path to return a better structured list of
         # objects for readability
-        path = _get_proxy_path(proxy)
+        ops = _get_ops(proxy)
         obj = self.__current_state
 
-        props: typing.List[typing.List[typing.Any]] = [[]]
-        it = iter(path)
-        for op in it:
-            assert isinstance(op, AttributeAccess)
-            props[-1].append(op)
-            # setattr/setitem means end of a statement, so the next operation
-            # would occur only on the root object.
-            if op == AttributeAccess.SETATTR:
-                props[-1].append(path[-1])
-                props[-1].append(path[-2])
-                setattr(obj, next(it), next(it))
-                props.append([])
+        stmts: typing.List[typing.List["PropertyOp"]] = [[]]
+        for op in ops:
+            stmts[-1].append(op)
+            obj = op.execute(obj)
+            # end of statement
+            if obj is None:
                 obj = self.__current_state
-            elif op == AttributeAccess.SETITEM:
-                props[-1].append(path[-1])
-                props[-1].append(path[-2])
-                obj[next(it)] = next(it)
-                props.append([])
-                obj = self.__current_state
-            elif op == AttributeAccess.GETITEM:
-                props[-1].append(path[-1])
-                obj = obj[next(it)]
-            else:
-                assert op == AttributeAccess.GETATTR
-                props[-1].append(path[-1])
-                obj = getattr(obj, next(it))
 
-        # for prop in props:
-        #     print(prop)
+        for stmt in stmts:
+            # if foo.bar.baz[0].blah is modified then we need to signal foo,
+            # foo.bar, foo.bar[0], foo.bar.baz[0].blah
+            print(stmt)
 
     @property
     def state(self) -> StateT:
@@ -156,28 +123,61 @@ class AttributeAccess(Enum):
     SETITEM = 3
     GETITEM = 4
 
+@dataclass
+class PropertyOp:
+    access: AttributeAccess
+    key: typing.Any
+    value: typing.Optional[typing.Any] = None
+
+    def execute(self,obj) -> typing.Optional[typing.Any]:
+        if self.access  == AttributeAccess.GETATTR:
+            return getattr(obj,self.key)
+        elif self.access == AttributeAccess.GETITEM:
+            return obj[self.key]
+        elif self.access == AttributeAccess.SETATTR:
+            setattr(obj,self.key,self.value)
+            return None
+        else:
+            assert self.access == AttributeAccess.SETITEM
+            obj[self.key] = self.value
+            return None
+
+    def get_value(self,obj) -> typing.Any:
+        if self.access in [AttributeAccess.GETATTR,AttributeAccess.SETATTR]:
+            return getattr(obj,self.key)
+        else:
+            assert self.access in [AttributeAccess.GETITEM,
+                                   AttributeAccess.SETITEM]
+            return obj[self.key]
+
 
 class Proxy:
     def __init__(self):
-        self.__dict__['__path'] = []
+        self.__dict__['__ops'] = []
 
     def __setattr__(self, name: str, value: typing.Any) -> None:
-        self.__dict__['__path'].extend([AttributeAccess.SETATTR, name, value])
+        self.__dict__['__ops'].append(
+            PropertyOp(AttributeAccess.SETATTR,
+                       name,value)
+        )
 
     def __getattr__(self, name: str) -> "Proxy":
-        self.__dict__['__path'].extend([AttributeAccess.GETATTR, name])
+        self.__dict__['__ops'].append(
+            PropertyOp(AttributeAccess.GETATTR,name)
+        )
         return self
 
     def __setitem__(self, key, value) -> None:
-        self.__dict__['__path'].extend([AttributeAccess.SETITEM, key, value])
+        self.__dict__['__ops'].append(
+            PropertyOp(AttributeAccess.SETITEM,key,value)
+        )
 
     def __getitem__(self, key) -> "Proxy":
-        self.__dict__['__path'].extend([
-            AttributeAccess.GETITEM,
-            key  # type: ignore
-        ])
+        self.__dict__['__ops'].append(
+            PropertyOp(AttributeAccess.GETITEM,key)
+        )
         return self
 
 
-def _get_proxy_path(proxy: Proxy):
-    return proxy.__dict__['__path']
+def _get_ops(proxy: Proxy):
+    return proxy.__dict__['__ops']
