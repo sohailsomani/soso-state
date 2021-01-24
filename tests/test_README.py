@@ -47,12 +47,18 @@ class TestREADME(unittest.TestCase):
         token = app.subscribe(lambda x: x.regional_managers[0], mock)
         mock.assert_called_with(Person("Michael", "Scott"))
 
+        pams_last_name = MagicMock()
+        app.subscribe(lambda x: x.employees[1].last_name,pams_last_name)
+        pams_last_name.assert_called_with("Beesly")
+
         def pam_gets_married(state: AppState) -> None:
             state.employees[1].last_name = "Halpert"
 
+        pams_last_name.reset_mock()
         app.update(pam_gets_married)
 
         self.assertEqual(app.state.employees[1].last_name, "Halpert")
+        pams_last_name.assert_called_with("Halpert")
 
         mock.reset_mock()
         app.update(regional_managers = [Person("Dwight","Schrute")],
