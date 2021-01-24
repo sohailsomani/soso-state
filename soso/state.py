@@ -162,21 +162,25 @@ class Model(typing.Generic[StateT]):
         obj = self.__current_state
 
         # Apply changes tos tate
-        stmts: typing.List[typing.List[PropertyOp]] = [[]]
+        stmts: typing.List[typing.List[PropertyOp]] = []
+        curr_stmt: typing.List[PropertyOp] = []
         for op in ops:
-            stmts[-1].append(op)
+            curr_stmt.append(op)
             obj, changed = op.execute(obj)
             # end of statement
             if obj is None:
                 obj = self.__current_state
                 if changed:
-                    stmts.append([])
+                    stmts.append(curr_stmt)
+                    curr_stmt = []
                 else:
                     # if not changed, ignore this statement
-                    stmts[-1].clear()
+                    curr_stmt = []
 
-        if stmts[-1] == []:
-            stmts.pop()
+        # append last stmt (technically, shouldn't happen if users write
+        # correct code, might want an assertion here)
+        if curr_stmt:
+            stmts.append(curr_stmt)
 
         if len(stmts) == 0:
             return
