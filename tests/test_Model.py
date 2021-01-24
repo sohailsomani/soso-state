@@ -39,7 +39,7 @@ class TestModel(unittest.TestCase):
         model = Model()
         mock = MagicMock()
 
-        model.subscribe(lambda x: x,mock)
+        model.subscribe(lambda x: x, mock)
         mock.assert_called_with(State(value=0))
 
         mock.reset_mock()
