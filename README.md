@@ -14,6 +14,7 @@ portion of the application state tree.
     * Subscribe to changes in any subset of the application state you are interested in
 * Efficient
     * Zero copying except for snapshot/restore functionality
+    * Only events for data that is actually changed are propagated
 * Predictable:
     * Consistent state => predictable application
 
