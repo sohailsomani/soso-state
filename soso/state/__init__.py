@@ -1,3 +1,4 @@
+import copy
 import logging
 import traceback
 import typing
@@ -9,12 +10,11 @@ from soso.event import Event, EventToken
 
 __all__ = ('Model')
 
-StateT = typing.TypeVar('StateT', covariant=True)
-StateT2 = typing.TypeVar('StateT2', contravariant=True)
+StateT = typing.TypeVar('StateT')
 
 
-class PropertyCallback(typing.Generic[StateT2], typing.Protocol):
-    def __call__(self, state: StateT2) -> typing.Any:
+class PropertyCallback(typing.Protocol):
+    def __call__(self, state: StateT) -> typing.Any:
         ...
 
 
@@ -93,7 +93,7 @@ class Model(typing.Generic[StateT]):
             root = op.get_value(root)
         return root
 
-    def subscribe(self, func: PropertyCallback[StateT],
+    def subscribe(self, func: PropertyCallback,
                   callback: EventCallback) -> EventToken:
         event, ops = self.__event(func)
         token = event.connect(callback, Event.Group.PROCESS)
@@ -103,7 +103,7 @@ class Model(typing.Generic[StateT]):
         return token
 
     def __event(
-        self, func: PropertyCallback[StateT]
+        self, func: PropertyCallback
     ) -> typing.Tuple[Event, typing.List[PropertyOp]]:
         proxy = Proxy()
         func(proxy)  # type: ignore
@@ -112,8 +112,15 @@ class Model(typing.Generic[StateT]):
         node = self.__get_node_for_ops(ops)
         return node.event, ops
 
-    def event(self, func: PropertyCallback[StateT]) -> Event:
+    def event(self, func: PropertyCallback) -> Event:
         return self.__event(func)[0]
+
+    def snapshot(self) -> StateT:
+        return copy.deepcopy(self.state)
+
+    def restore(self, snapshot: StateT) -> None:
+        self.__current_state = snapshot
+        self.__fire_all_child_events(self.__root, self.__current_state)
 
     def __fire_all_child_events(self, node: Node, parent: typing.Any) -> None:
         for name, child_node in node.children.items():

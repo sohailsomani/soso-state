@@ -10,6 +10,16 @@ compose it as needed for a particular application. Less time spent thinking
 about boilerplate means more time spent thinking about the actual business
 problem.
 
+## Main Features
+
+* Intuitive (hopefully) syntax
+* Compose state and model behaviour
+* Designed to optimize for dev time on happy path
+* Zero copying except for...
+* Snapshot/restore functionality built in for time travel debugging
+* Sensible default behaviour
+* Judicious use of Python typing to catch errors as early as possible
+
 ## Quickstart
 
 `$ pip install git+https://github.com/sohailsomani/soso-state`
@@ -79,15 +89,6 @@ app.subscribe(lambda state: state.regional_managers,
               print)
 # output: [Person("Jim","Halpert")] [Person("Pam","Halpert")]
 ```
-
-## Main Features
-
-* Intuitive (hopefully) syntax
-* Compose state and model behaviour
-* Designed to optimize for dev time on happy path
-* No cloning of state
-* Sensible default behaviour
-* Judicious use of Python typing to catch errors as early as possible
 
 ## Async examples
 
