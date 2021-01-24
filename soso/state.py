@@ -163,6 +163,8 @@ class Model(typing.Generic[StateT]):
                 obj = self.__current_state
                 stmts.append([])
 
+        # Always emit root event
+        self.__root.event.emit(self.__current_state)
         for stmt in stmts:
             if not stmt:
                 continue

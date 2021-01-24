@@ -34,3 +34,15 @@ class TestModel(unittest.TestCase):
         mock.reset_mock()
         model.restore(snapshot)
         mock.assert_called_with(25)
+
+    def test_root_changes(self) -> None:
+        model = Model()
+        mock = MagicMock()
+
+        model.subscribe(lambda x: x,mock)
+        mock.assert_called_with(State(value=0))
+
+        mock.reset_mock()
+        model.update(value=12)
+        mock.assert_called_with(State(value=12))
+
