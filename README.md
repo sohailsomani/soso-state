@@ -14,7 +14,7 @@ problem.
 
 `$ pip install git+https://github.com/sohailsomani/soso-state`
 
-**Note**: The most up-to-date version of this code is in `test_README.py`.
+**Note**: The most up-to-date version of this code is in [`test_README.py`](tests/test_README.py).
 
 ```python
 from dataclasses import dataclass, field
