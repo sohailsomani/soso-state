@@ -1,3 +1,4 @@
+import asyncio
 import typing
 import unittest
 from dataclasses import dataclass, field
@@ -58,3 +59,13 @@ class TestREADME(unittest.TestCase):
                    assistant_to_the_regional_managers = [])
 
         mock.assert_called_with(Person("Dwight","Schrute"))
+
+        task = asyncio.get_event_loop().create_task(self.__myfunc(app))
+        asyncio.get_event_loop().call_soon(lambda: app.update(regional_managers=[]))
+        asyncio.get_event_loop().run_until_complete(task)
+
+        self.assertEqual(self.__regional_managers,[])
+
+    async def __myfunc(self,app:AppModel):
+        regional_managers = await app.event(lambda state: state.regional_managers)
+        self.__regional_managers = regional_managers
