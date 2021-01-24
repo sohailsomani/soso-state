@@ -1,9 +1,10 @@
 import typing
 import unittest
 from dataclasses import dataclass, field
-from unittest.mock import MagicMock
 
 from soso import state
+
+# from unittest.mock import MagicMock
 
 
 @dataclass
