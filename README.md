@@ -7,15 +7,15 @@ portion of the application state tree.
 
 ## Main Features
 
-* Single source of truth for entire application state
-* Subscribe to changes in any subset of the application state you are interested
-  in without loss of generality
-* Optimized for dev time, with a trapdoor to make things super efficient if
-  needed
-* Zero copying except for...
-* ...Snapshot/restore functionality built in for time travel debugging
-* Sensible default behaviour
-* Judicious use of Python typing to catch errors as early as possible
+* Centralized:
+** Single source of truth for entire application state
+** Easily implement undo/redo/persistence
+* Flexible:
+** Subscribe to changes in any subset of the application state you are interested in
+* Efficient
+** Zero copying except for snapshot/restore functionality
+* Predictable:
+** Consistent state => predictable application
 
 ## Quickstart
 
