@@ -37,34 +37,32 @@ class Model(typing.Generic[StateT]):
         self.__root = Node()
 
     def __getNodeForPath(self, path: typing.List[typing.Any]) -> Node:
-        path = path[::-1]
+        it = iter(path)
         root: Node = self.__root
         children = []
-        while path:
-            op = path.pop()
+        for op in it:
             if op in [AttributeAccess.SETATTR, AttributeAccess.SETITEM]:
-                child = path.pop()
-                path.pop()
+                child = next(it)
+                next(it)
                 assert len(path) == 0
             else:
                 assert op in [AttributeAccess.GETITEM, AttributeAccess.GETATTR]
-                child = path.pop()
+                child = next(it)
             children.append(str(child))
             root = root.children[child]
         root.event._name = ".".join(children)
         return root
 
     def __getValueForPath(self, path: typing.List[typing.Any]) -> Node:
-        path = path[::-1]
+        it = iter(path)
         root: typing.Any = self.__current_state
-        while path:
-            op = path.pop()
+        for op in it:
             if op in [AttributeAccess.SETATTR, AttributeAccess.GETATTR]:
-                child = path.pop()
+                child = next(it)
                 root = getattr(root, child)
             else:
                 assert op in [AttributeAccess.SETITEM, AttributeAccess.GETITEM]
-                child = path.pop()
+                child = next(it)
                 root = root[child]
         return root
 
@@ -115,34 +113,32 @@ class Model(typing.Generic[StateT]):
         path = _get_proxy_path(proxy)
         obj = self.__current_state
 
-        # reverse because I like using pop vs del, can also use a deque on
-        # original list. too lazy though. easy fix if performance issue
-        path.reverse()
         props: typing.List[typing.List[typing.Any]] = [[]]
-        while path:
-            op = path.pop()
+        it = iter(path)
+        for op in it:
+            assert isinstance(op,AttributeAccess)
             props[-1].append(op)
             # setattr/setitem means end of a statement, so the next operation
             # would occur only on the root object.
             if op == AttributeAccess.SETATTR:
                 props[-1].append(path[-1])
                 props[-1].append(path[-2])
-                setattr(obj, path.pop(), path.pop())
+                setattr(obj, next(it), next(it))
                 props.append([])
                 obj = self.__current_state
             elif op == AttributeAccess.SETITEM:
                 props[-1].append(path[-1])
                 props[-1].append(path[-2])
-                obj[path.pop()] = path.pop()
+                obj[next(it)] = next(it)
                 props.append([])
                 obj = self.__current_state
             elif op == AttributeAccess.GETITEM:
                 props[-1].append(path[-1])
-                obj = obj[path.pop()]
+                obj = obj[next(it)]
             else:
                 assert op == AttributeAccess.GETATTR
                 props[-1].append(path[-1])
-                obj = getattr(obj, path.pop())
+                obj = getattr(obj, next(it))
 
         # for prop in props:
         #     print(prop)
