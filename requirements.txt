@@ -1,0 +1,1 @@
+-e git+ssh://soso.github.com/sohailsomani/soso-event.git#egg=soso-event
