@@ -12,7 +12,7 @@ problem.
 
 ## Quickstart
 
-`$ pip install soso-state`
+`$ pip install git+https://github.com/sohailsomani/soso-state`
 
 **Note**: The most up-to-date version of this code is in `test_README.py`.
 
