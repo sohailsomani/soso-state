@@ -141,12 +141,34 @@ class Model(typing.Generic[StateT]):
         result = await self.event_trapdoor(property)
         return result
 
-    def snapshot(self) -> StateT:
-        return copy.deepcopy(self.state)
+    def snapshot(self,property:PropertyCallback[StateT,T] = lambda x: x) -> T:
+        subtree = property(self.state)
+        return copy.deepcopy(subtree)
 
-    def restore(self, snapshot: StateT) -> None:
-        self.__current_state = snapshot
-        self.__fire_all_child_events(self.__root, self.__current_state)
+    def restore(self, snapshot: typing.Union[T,StateT],
+                property:typing.Optional[PropertyCallback[StateT,T]] = None) -> None:
+        if property is None:
+            self.__current_state = typing.cast(StateT,snapshot)
+            self.__fire_all_child_events(self.__root, self.__current_state)
+        else:
+            proxy = typing.cast(StateT,Proxy())
+            property(proxy)
+            ops = _get_ops(typing.cast(Proxy,proxy))
+            node = self.__get_node_for_ops(ops)
+            if ops[-1].access == AttributeAccess.GETATTR:
+                ops[-1].access = AttributeAccess.SETATTR
+            elif ops[-1].access == AttributeAccess.GETITEM:
+                ops[-1].access = AttributeAccess.SETITEM
+            else:
+                assert False
+            ops[-1].value = snapshot
+            obj:typing.Optional[typing.Any] = self.__current_state
+            for op in ops:
+                obj,_ = op.execute(obj)
+            assert obj is None # Last should have been a set
+            value = property(self.__current_state)
+            node.event.emit(value)
+            self.__fire_all_child_events(node,value)
 
     def __fire_all_child_events(self, node: Node, parent: typing.Any) -> None:
         for name, child_node in node.children.items():

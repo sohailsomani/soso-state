@@ -1,13 +1,15 @@
+import copy
 import os
 import pickle
 import tkinter as tk
+import traceback
 import typing
 from dataclasses import dataclass, field
 
-from soso import state
+from soso import event, state
 
-""" Simple example of a TODO app in Tk that implements persistence. See
-save/load methods on TodoAppModel """
+"""Simple example of a TODO app that implements undo/redo. See make_undoable"""
+
 
 @dataclass
 class Todo:
@@ -15,22 +17,72 @@ class Todo:
     done: bool = False
 
 
+T = typing.TypeVar('T')
+@dataclass
+class UndoState(typing.Generic[T]):
+    current: T
+    past: typing.List[T] = field(default_factory=list)
+    is_active:bool = False
+
 @dataclass
 class TodoAppState:
     todos: typing.List[Todo] = field(default_factory=list)
 
+def make_undoable(
+    model: state.Model[state.StateT],
+    prop: state.PropertyCallback[state.StateT, state.T]
+) -> typing.Callable[[], None]:
+    # The idea here is to catch every state update, memorize that as the
+    # "current" state and push it onto the "past" stack when we get a new
+    # update. Rinse and repeat.
+    #
+    # Important to note that we need to avoid against recursive updates when we
+    # restore the previous state using the is_active member of the undo state.
+    # (undo -> restore old state -> technically a new state -> add new undo state? No!)
+    #
+    # Future improvements could be to attach the UndoState automatically onto
+    # the state tree as technically this is part of application state.
+
+    undo = UndoState(current=model.snapshot(prop))
+
+    def on_state_update(__ignored:state.T) -> None:
+        if undo.is_active:
+            return
+        undo.past.append(undo.current)
+        undo.current = model.snapshot(prop)
+
+    def on_do_undo() -> None:
+        if len(undo.past) == 0:
+            return
+        try:
+            undo.is_active = True
+            model.restore(undo.past.pop(),prop)
+        finally:
+            undo.is_active = False
+
+    model.subscribe(prop, on_state_update)
+
+    return on_do_undo
+
 
 class TodoAppModel(state.Model[TodoAppState]):
+    def __init__(self) -> None:
+        super().__init__()
+        self.__undo = make_undoable(self, lambda x: x.todos)
+
+    def undo(self) -> None:
+        self.__undo()
+
     def add_todo(self, text: str) -> None:
         assert text
         todo = Todo(description=text)
         self.update(todos=self.state.todos + [todo])
 
-    def save(self,filename:str) -> None:
+    def save(self, filename:str) -> None:
         with open(filename, 'wb') as f:
-            pickle.dump(model.snapshot(), f)
+            pickle.dump(self.snapshot(), f)
 
-    def load(self,filename:str) -> None:
+    def load(self, filename:str) -> None:
         if not os.path.isfile(filename):
             return
         with open(filename, 'rb') as f:
@@ -57,6 +109,11 @@ class UI(tk.Frame):
         self.listbox_contents = tk.StringVar()
         self.listbox = tk.Listbox(listvariable=self.listbox_contents)
         self.listbox.pack()
+
+        self.undo = tk.Button()
+        self.undo["text"] = "Undo"
+        self.undo["command"] = self.__model.undo
+        self.undo.pack()
 
         self.pack()
 

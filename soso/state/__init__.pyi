@@ -50,8 +50,18 @@ class Model(typing.Generic[StateT]):
     def event_trapdoor(self, property: PropertyCallback[StateT, T]) -> Event:
         ...
 
+    @typing.overload
     def snapshot(self) -> StateT:
         ...
 
+    @typing.overload
+    def snapshot(self,property:PropertyCallback[StateT,T]) -> T:
+        ...
+
+    @typing.overload
     def restore(self, snapshot: StateT) -> None:
+        ...
+
+    @typing.overload
+    def restore(self, snapshot: T, property:PropertyCallback[StateT,T]) -> None:
         ...

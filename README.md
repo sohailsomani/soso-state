@@ -25,7 +25,7 @@ to finance. See the [Motivation](#motivation) section below.
 
 * Centralized:
     * Single source of truth for entire application state
-    * Easily implement undo/redo/persistence
+    * Easily implement [undo/redo](examples/undo.py)/[persistence](examples/todo.py)
 * Flexible:
     * Subscribe to changes in any subset of the application state you are interested in
 * Efficient
