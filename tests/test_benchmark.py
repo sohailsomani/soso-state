@@ -1,16 +1,20 @@
+# type: ignore
+
 from dataclasses import dataclass
 
 from soso import state
 from soso.event import Event
 
 
-def test_raw_update(benchmark):
+def test_raw_update(benchmark) -> None:
     emitted = []
+
     def on_update(e):
         assert e == 42
         emitted.append(True)
+
     event = Event("Event")
-    event.connect(on_update,Event.Group.PROCESS)
+    event.connect(on_update, Event.Group.PROCESS)
 
     @benchmark
     def doit():
@@ -20,21 +24,23 @@ def test_raw_update(benchmark):
 
     assert emitted
 
+
 def test_model_update(benchmark):
     @dataclass
     class State:
-        value:int = 42
+        value: int = 42
 
     class Model(state.Model[State]):
         pass
 
     model = Model()
     emitted = []
+
     def on_update(e):
         assert e == 42
         emitted.append(True)
 
-    model.subscribe(lambda x: x.value,on_update)
+    model.subscribe(lambda x: x.value, on_update)
 
     @benchmark
     def doit():
