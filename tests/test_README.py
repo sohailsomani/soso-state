@@ -94,7 +94,8 @@ class TestREADME(unittest.TestCase):
         regional_manager.assert_not_called()
 
     async def __myfunc(self, app: AppModel) -> typing.List[Person]:
-        def prop(state:AppState) -> typing.List[Person]:
+        def prop(state: AppState) -> typing.List[Person]:
             return state.regional_managers
+
         regional_managers = await app.wait_for(prop)
         return regional_managers

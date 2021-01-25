@@ -114,7 +114,7 @@ class Model(typing.Generic[StateT]):
             root = op.get_value(root)
         return root
 
-    def subscribe(self, func: PropertyCallback[StateT,T],
+    def subscribe(self, func: PropertyCallback[StateT, T],
                   callback: EventCallback[T]) -> EventToken:
         event, ops = self.__event(func)
         token = event.connect(callback, Event.Group.PROCESS)
@@ -136,24 +136,27 @@ class Model(typing.Generic[StateT]):
     def event_trapdoor(self, property: PropertyCallback) -> Event:
         return self.__event(property)[0]
 
-    async def wait_for(
-            self, property: PropertyCallback) -> T:
+    async def wait_for(self, property: PropertyCallback) -> T:
         result = await self.event_trapdoor(property)
         return result
 
-    def snapshot(self,property:PropertyCallback[StateT,T] = lambda x: x) -> T:
+    def snapshot(self,
+                 property: PropertyCallback[StateT, T] = lambda x: x) -> T:
         subtree = property(self.state)
         return copy.deepcopy(subtree)
 
-    def restore(self, snapshot: typing.Union[T,StateT],
-                property:typing.Optional[PropertyCallback[StateT,T]] = None) -> None:
+    def restore(
+            self,
+            snapshot: typing.Union[T, StateT],
+            property: typing.Optional[PropertyCallback[StateT,
+                                                       T]] = None) -> None:
         if property is None:
-            self.__current_state = typing.cast(StateT,snapshot)
+            self.__current_state = typing.cast(StateT, snapshot)
             self.__fire_all_child_events(self.__root, self.__current_state)
         else:
-            proxy = typing.cast(StateT,Proxy())
+            proxy = typing.cast(StateT, Proxy())
             property(proxy)
-            ops = _get_ops(typing.cast(Proxy,proxy))
+            ops = _get_ops(typing.cast(Proxy, proxy))
             node = self.__get_node_for_ops(ops)
             if ops[-1].access == AttributeAccess.GETATTR:
                 ops[-1].access = AttributeAccess.SETATTR
@@ -162,13 +165,13 @@ class Model(typing.Generic[StateT]):
             else:
                 assert False
             ops[-1].value = snapshot
-            obj:typing.Optional[typing.Any] = self.__current_state
+            obj: typing.Optional[typing.Any] = self.__current_state
             for op in ops:
-                obj,_ = op.execute(obj)
-            assert obj is None # Last should have been a set
+                obj, _ = op.execute(obj)
+            assert obj is None  # Last should have been a set
             value = property(self.__current_state)
             node.event.emit(value)
-            self.__fire_all_child_events(node,value)
+            self.__fire_all_child_events(node, value)
 
     def __fire_all_child_events(self, node: Node, parent: typing.Any) -> None:
         for name, child_node in node.children.items():

@@ -1,12 +1,10 @@
-import copy
 import os
 import pickle
 import tkinter as tk
-import traceback
 import typing
 from dataclasses import dataclass, field
 
-from soso import event, state
+from soso import state
 
 """Simple example of a TODO app that implements undo/redo. See make_undoable"""
 
@@ -18,15 +16,19 @@ class Todo:
 
 
 T = typing.TypeVar('T')
+
+
 @dataclass
 class UndoState(typing.Generic[T]):
     current: T
     past: typing.List[T] = field(default_factory=list)
-    is_active:bool = False
+    is_active: bool = False
+
 
 @dataclass
 class TodoAppState:
     todos: typing.List[Todo] = field(default_factory=list)
+
 
 def make_undoable(
     model: state.Model[state.StateT],
@@ -38,14 +40,15 @@ def make_undoable(
     #
     # Important to note that we need to avoid against recursive updates when we
     # restore the previous state using the is_active member of the undo state.
-    # (undo -> restore old state -> technically a new state -> add new undo state? No!)
+    # (undo -> restore old state -> technically a new state -> add new undo
+    # state? No!)
     #
     # Future improvements could be to attach the UndoState automatically onto
     # the state tree as technically this is part of application state.
 
     undo = UndoState(current=model.snapshot(prop))
 
-    def on_state_update(__ignored:state.T) -> None:
+    def on_state_update(__ignored: state.T) -> None:
         if undo.is_active:
             return
         undo.past.append(undo.current)
@@ -56,7 +59,7 @@ def make_undoable(
             return
         try:
             undo.is_active = True
-            model.restore(undo.past.pop(),prop)
+            model.restore(undo.past.pop(), prop)
         finally:
             undo.is_active = False
 
@@ -78,16 +81,17 @@ class TodoAppModel(state.Model[TodoAppState]):
         todo = Todo(description=text)
         self.update(todos=self.state.todos + [todo])
 
-    def save(self, filename:str) -> None:
+    def save(self, filename: str) -> None:
         with open(filename, 'wb') as f:
             pickle.dump(self.snapshot(), f)
 
-    def load(self, filename:str) -> None:
+    def load(self, filename: str) -> None:
         if not os.path.isfile(filename):
             return
         with open(filename, 'rb') as f:
             snapshot = pickle.load(f)
         self.restore(snapshot)
+
 
 class UI(tk.Frame):
     def __init__(self, model: TodoAppModel) -> None:

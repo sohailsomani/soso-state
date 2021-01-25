@@ -9,6 +9,7 @@ from soso import state
 """ Simple example of a TODO app in Tk that implements persistence. See
 save/load methods on TodoAppModel """
 
+
 @dataclass
 class Todo:
     description: str = ''
@@ -26,16 +27,17 @@ class TodoAppModel(state.Model[TodoAppState]):
         todo = Todo(description=text)
         self.update(todos=self.state.todos + [todo])
 
-    def save(self,filename:str) -> None:
+    def save(self, filename: str) -> None:
         with open(filename, 'wb') as f:
             pickle.dump(model.snapshot(), f)
 
-    def load(self,filename:str) -> None:
+    def load(self, filename: str) -> None:
         if not os.path.isfile(filename):
             return
         with open(filename, 'rb') as f:
             snapshot = pickle.load(f)
         self.restore(snapshot)
+
 
 class UI(tk.Frame):
     def __init__(self, model: TodoAppModel) -> None:

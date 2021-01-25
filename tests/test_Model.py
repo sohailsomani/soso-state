@@ -43,14 +43,14 @@ class TestModel(unittest.TestCase):
         model.update(value=42)
         snapshot = model.snapshot(lambda x: x.value)
         model.update(value=69)
-        self.assertIsInstance(snapshot,int)
+        self.assertIsInstance(snapshot, int)
 
         mock = MagicMock()
-        model.subscribe(lambda x: x.value,mock)
+        model.subscribe(lambda x: x.value, mock)
         mock.assert_called_with(69)
         mock.reset_mock()
-        model.restore(snapshot,lambda x: x.value)
-        self.assertEqual(model.state.value,42)
+        model.restore(snapshot, lambda x: x.value)
+        self.assertEqual(model.state.value, 42)
         mock.assert_called_with(42)
         mock.assert_called_once()
 
