@@ -63,7 +63,7 @@ class UI(tk.Frame):
         self.__model.add_todo(txt)
         self.entry_contents.set("")
 
-    def run(self):
+    def run(self) -> None:
         self.mainloop()
 
 
