@@ -25,9 +25,10 @@ class TodoAppModel(state.Model[TodoAppState]):
 
 
 class UI(tk.Frame):
-    def __init__(self, model: TodoAppModel, master: tk.Tk) -> None:
+    def __init__(self, model: TodoAppModel) -> None:
         self.__model = model
-        super().__init__(master)
+        root = tk.Tk()
+        super().__init__(root)
 
         self.entry = tk.Entry()
         self.entry_contents = tk.StringVar()
@@ -62,6 +63,9 @@ class UI(tk.Frame):
         self.__model.add_todo(txt)
         self.entry_contents.set("")
 
+    def run(self):
+        self.mainloop()
+
 
 model = TodoAppModel()
 try:
@@ -71,9 +75,8 @@ try:
 except Exception:
     pass
 
-root = tk.Tk()
-ui = UI(model, root)
-ui.mainloop()
+ui = UI(model)
+ui.run()
 
 with open('.todos', 'wb') as f:
     pickle.dump(model.snapshot(), f)
