@@ -71,6 +71,10 @@ def make_undoable(
 class TodoAppModel(state.Model[TodoAppState]):
     def __init__(self) -> None:
         super().__init__()
+        # Ensure we load any state before we make it undoable, otherwise the
+        # initial "current" state will be empty
+        self.load('.todos')
+
         self.__undo = make_undoable(self, lambda x: x.todos)
 
     def undo(self) -> None:
@@ -142,7 +146,6 @@ class UI(tk.Frame):
 
 
 model = TodoAppModel()
-model.load('.todos')
 
 ui = UI(model)
 ui.run()

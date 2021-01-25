@@ -29,7 +29,7 @@ class TodoAppModel(state.Model[TodoAppState]):
 
     def save(self, filename: str) -> None:
         with open(filename, 'wb') as f:
-            pickle.dump(model.snapshot(), f)
+            pickle.dump(self.snapshot(), f)
 
     def load(self, filename: str) -> None:
         if not os.path.isfile(filename):
