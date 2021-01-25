@@ -18,12 +18,11 @@ class TodoAppState:
 
 
 class TodoAppModel(state.Model[TodoAppState]):
-    def add_todo(self,text):
+    def add_todo(self, text: str) -> None:
         assert text
         todo = Todo(description=text)
-        self.update(
-            todos = self.state.todos + [todo]
-        )
+        self.update(todos=self.state.todos + [todo])
+
 
 class UI(tk.Frame):
     def __init__(self, model: TodoAppModel, master: tk.Tk) -> None:
@@ -33,7 +32,7 @@ class UI(tk.Frame):
         self.entry = tk.Entry()
         self.entry_contents = tk.StringVar()
         self.entry["textvariable"] = self.entry_contents
-        self.entry.bind('<Key-Return>',self.__add_todo)
+        self.entry.bind('<Key-Return>', self.__add_todo)
         self.entry.pack()
 
         self.button = tk.Button()
@@ -49,22 +48,24 @@ class UI(tk.Frame):
 
         x: TodoAppState
         self.__model.subscribe(lambda x: x.todos,
-                               self.__update_listbox)
+                               lambda todos: self.__update_listbox(todos))
 
-    def __update_listbox(self,todos:typing.List[Todo]):
-        t:Todo
+    def __update_listbox(self, todos: typing.List[Todo]) -> None:
+        t: Todo
         choices = [t.description for t in todos]
-        self.listbox_contents.set(choices)
+        self.listbox_contents.set(choices)  # type: ignore
 
-    def __add_todo(self,*a,**kw):
+    def __add_todo(self, *a: typing.Any, **kw: typing.Any) -> None:
         txt = self.entry_contents.get()
-        if not txt: return
+        if not txt:
+            return
         self.__model.add_todo(txt)
         self.entry_contents.set("")
 
+
 model = TodoAppModel()
 try:
-    with open('.todos','rb') as f:
+    with open('.todos', 'rb') as f:
         snapshot = pickle.load(f)
     model.restore(snapshot)
 except Exception:
@@ -74,5 +75,5 @@ root = tk.Tk()
 ui = UI(model, root)
 ui.mainloop()
 
-with open('.todos','wb') as f:
-    pickle.dump(model.snapshot(),f)
+with open('.todos', 'wb') as f:
+    pickle.dump(model.snapshot(), f)

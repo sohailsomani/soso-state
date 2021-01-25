@@ -10,14 +10,10 @@ class PropertyCallback(typing.Protocol):
         ...
 
 
-class EventCallback(typing.Protocol):
-    def __call__(self, *args: typing.Any) -> typing.Optional[typing.Any]:
-        ...
-
-
 class Model(typing.Generic[StateT]):
-    def subscribe(self, func: PropertyCallback,
-                  callback: EventCallback) -> EventToken:
+    def subscribe(
+            self, func: PropertyCallback,
+            callback: typing.Callable[[typing.Any], typing.Any]) -> EventToken:
         ...
 
     @typing.overload
