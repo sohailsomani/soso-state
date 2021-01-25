@@ -26,7 +26,7 @@ class StateUpdateCallback(typing.Generic[StateT_contra], typing.Protocol):
 
 class Model(typing.Generic[StateT]):
     def subscribe(self, property: PropertyCallback[StateT, T],
-                  callback: EventCallback[T]) -> EventToken:
+                  callback: EventCallback[T_contra]) -> EventToken:
         ...
 
     @typing.overload

@@ -114,8 +114,8 @@ class Model(typing.Generic[StateT]):
             root = op.get_value(root)
         return root
 
-    def subscribe(self, func: PropertyCallback,
-                  callback: EventCallback) -> EventToken:
+    def subscribe(self, func: PropertyCallback[StateT,T],
+                  callback: EventCallback[T]) -> EventToken:
         event, ops = self.__event(func)
         token = event.connect(callback, Event.Group.PROCESS)
         value = self.__get_value_for_ops(ops)
