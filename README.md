@@ -184,3 +184,9 @@ So obviously, caching and compiling the traversals that are needed:
 3. The traversal to set the new value
 
 would result in a system that is effectively equivalent to hand-written code.
+
+This is the trapdoor for performance referenced earlier and I believe it would
+be very difficult to improve upon this performance for hand-written code.
+
+There are still other performance improvements that can be made, but this is the
+one that would probably overcome any performance-related objections.
