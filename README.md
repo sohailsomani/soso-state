@@ -130,3 +130,57 @@ consistency in the syntax for events, state viewing and state updating.
 ## Implementation
 
 Boring and straightforward
+
+## Obvious low-hanging optimizations
+
+The most obvious optimization would be to convert the object traversal into
+python code. This sounds complex and scary but isn't really. At the moment, we
+do something like this:
+
+```python
+root = self.__current_state
+for prop in properties:
+  root = getattr(root,prop)
+```
+
+This code compiles down to:
+
+```python
+  2           0 LOAD_FAST                1 (properties)
+              2 GET_ITER
+        >>    4 FOR_ITER                14 (to 20)
+              6 STORE_FAST               2 (prop)
+
+  3           8 LOAD_GLOBAL              0 (getattr)
+             10 LOAD_FAST                0 (root)
+             12 LOAD_FAST                2 (prop)
+             14 CALL_FUNCTION            2
+             16 STORE_FAST               0 (root)
+             18 JUMP_ABSOLUTE            4
+
+  4     >>   20 LOAD_FAST                0 (root)
+             22 RETURN_VALUE
+```
+
+Whereas the hand-written code:
+
+```python
+root = self.__current_state.property1.property2
+```
+
+compiles to:
+
+```python
+  2           0 LOAD_FAST                0 (root)
+              2 LOAD_ATTR                0 (a)
+              4 LOAD_ATTR                1 (b)
+              6 RETURN_VALUE
+```
+
+So obviously, caching and compiling the traversals that are needed:
+
+1. The traversal to find the correct event to emit
+2. The traversal to find the current property
+3. The traversal to set the new value
+
+would result in a system that is effectively equivalent to hand-written code.
