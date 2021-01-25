@@ -1,11 +1,12 @@
 # soso.state
 
 `soso.state` is a Python 3.8+ implementation of a general state management
-pattern. It is inspired by and has goals similar to Redux, but where it differs
-is that it is designed to perform well by default through the use of little to
-no copying and a focus on efficient, finely grained notifications for any subset
-of the application state. It is also designed to centralize most, if not all
-decisions regarding efficiency and structural organization.
+pattern using a mostly declarative syntax. It is inspired by and has goals
+similar to Redux, but where it differs is that it is designed to perform well by
+default through the use of little to no copying and a focus on efficient, finely
+grained notifications for any subset of the application state. Through the
+declarative approach, it is designed to centralize most, if not all decisions
+regarding efficiency and structural organization.
 
 * [Status](#status)
 * [Main Benefits](#main-benefits)
