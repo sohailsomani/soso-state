@@ -6,7 +6,7 @@ from soso import state
 from soso.event import Event
 
 
-def test_raw_update(benchmark) -> None:
+def test_raw(benchmark) -> None:
     emitted = []
 
     def on_update(e):
@@ -25,7 +25,7 @@ def test_raw_update(benchmark) -> None:
     assert emitted
 
 
-def test_model_update(benchmark):
+def test_fancy(benchmark):
     @dataclass
     class State:
         value: int = 42
