@@ -110,7 +110,7 @@ app.subscribe(lambda state: state.regional_managers,
 
 ```python
 async def myfunc(app:AppModel):
-  regional_managers = await app.event(lambda state: state.regional_managers)
+  regional_managers = await app.wait_for(lambda state: state.regional_managers)
   print(regional_managers)
 
 asyncio.get_event_loop().create_task(myfunc(app))
@@ -205,4 +205,27 @@ This is not the only way to optimize the code, but given that most of the code
 the developer writes is **meta-programming**, it leaves lots of options open.
 
 As of yet, I haven't had to optimize this type of implementation at this level
-after having used it for about 3 years, so take from that what you will.
+after having used it for about 3 years, including in a situation where we had
+real-time sensor updates and needed to maintain 60FPS so take from that what you
+will.
+
+Not to say I wouldn't enjoy doing the above :-)
+
+### A second trapdoor
+
+Say you have a real-time data feed coming in and you _really_ don't like the
+overhead of `app.update()` for the purpose of notifications, in that case you
+can do something like:
+
+```python
+bid_event = app.event(lambda x: x.stock["IBM"].bid)
+...
+def on_bid_update(bid):
+  # manually update the state and emit the event
+  app.state.stock["IBM"].bid = bid
+  bid_event.emit(bid)
+```
+
+This should be done with care as it has the possibility for creating an
+inconsistent state. The idea is that the first trapdoor, if implemented, should
+do exactly this, but automatically.

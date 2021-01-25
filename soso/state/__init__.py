@@ -10,16 +10,25 @@ from soso.event import Event, EventToken
 
 __all__ = ('Model')
 
+StateT_contra = typing.TypeVar('StateT_contra', contravariant=True)
 StateT = typing.TypeVar('StateT')
+T = typing.TypeVar('T')
+T_contra = typing.TypeVar('T_contra', contravariant=True)
+T_co = typing.TypeVar('T_co', covariant=True)
 
 
-class PropertyCallback(typing.Protocol):
-    def __call__(self, state: StateT) -> typing.Any:
+class EventCallback(typing.Generic[T_contra], typing.Protocol):
+    def __call__(self, __value: T_contra) -> typing.Optional[typing.Any]:
         ...
 
 
-class EventCallback(typing.Protocol):
-    def __call__(self, *args: typing.Any) -> typing.Optional[typing.Any]:
+class PropertyCallback(typing.Generic[StateT_contra, T_co], typing.Protocol):
+    def __call__(self, __state: StateT_contra) -> T_co:
+        ...
+
+
+class StateUpdateCallback(typing.Generic[StateT_contra], typing.Protocol):
+    def __call__(self, __state: StateT_contra) -> None:
         ...
 
 
@@ -124,8 +133,13 @@ class Model(typing.Generic[StateT]):
         node = self.__get_node_for_ops(ops)
         return node.event, ops
 
-    def event(self, func: PropertyCallback) -> Event:
-        return self.__event(func)[0]
+    def event_trapdoor(self, property: PropertyCallback) -> Event:
+        return self.__event(property)[0]
+
+    async def wait_for(
+            self, property: PropertyCallback) -> T:
+        result = await self.event_trapdoor(property)
+        return result
 
     def snapshot(self) -> StateT:
         return copy.deepcopy(self.state)
@@ -149,12 +163,12 @@ class Model(typing.Generic[StateT]):
         ...
 
     @typing.overload
-    def update(self, func: typing.Callable[[StateT], None]) -> None:
+    def update(self, func: StateUpdateCallback[StateT]) -> None:
         ...
 
-    def update(self, *args: typing.Callable[[StateT], None],
+    def update(self, *args: StateUpdateCallback[StateT],
                **kwargs: typing.Any) -> None:
-        func: typing.Callable[[StateT], None]
+        func: StateUpdateCallback[StateT]
 
         if len(args) == 0:
             assert len(kwargs) != 0

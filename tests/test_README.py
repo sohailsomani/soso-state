@@ -88,12 +88,13 @@ class TestREADME(unittest.TestCase):
             lambda: app.update(regional_managers=[Person("Jim", "Halpert")]))
         asyncio.get_event_loop().run_until_complete(task)
 
-        self.assertEqual(self.__regional_managers, [Person("Jim", "Halpert")])
+        self.assertEqual(task.result(), [Person("Jim", "Halpert")])
         # we disconnected the token, so no more notifications for the regional
         # manager
         regional_manager.assert_not_called()
 
-    async def __myfunc(self, app: AppModel) -> None:
-        regional_managers = await app.event(
-            lambda state: state.regional_managers)
-        self.__regional_managers = regional_managers
+    async def __myfunc(self, app: AppModel) -> typing.List[Person]:
+        def prop(state:AppState) -> typing.List[Person]:
+            return state.regional_managers
+        regional_managers = await app.wait_for(prop)
+        return regional_managers
