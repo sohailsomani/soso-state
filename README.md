@@ -17,9 +17,15 @@ regarding efficiency and structural organization.
 
 ## Status
 
-Although this particular library is new, multiple versions of it are 
+Although this particular library is new, multiple versions of it are
 in production in private in a variety of industries ranging from healthcare
 to finance. See the [Motivation](#motivation) section below.
+
+In particular, although the design allows for atomic updates, those are not
+really implemented due to a lack of a pressing need. This means that if there
+are indeed errors during updates, it could leave things in an inconsistent
+state. But we don't write code with errors in it anyway. It's the outside world
+that is wrong.
 
 ## Main Benefits
 
@@ -58,17 +64,17 @@ class AppState:
   regional_managers: list[Person] = field(default_factory=list)
   assistant_to_the_regional_managers: list[Person] = field(default_factory=list)
   employees: list[Person] = field(default_factory=list)
-  
+
 class AppModel(state.Model[AppState]):
   pass
-  
+
 app = AppModel()
 
 app.update(
   regional_managers = [Person("Michael","Scott")],
   assistant_to_the_regional_managers = [Person("Dwight","Schrute")],
   employees = [Person("Jim","Halpert"),
-               Person("Pam","Beesly")] 
+               Person("Pam","Beesly")]
 )
 
 # Subscribe to changes in the 0th position of the regional_managers array.
@@ -98,7 +104,7 @@ app.update(pam_gets_married)
 app.update(regional_managers = [Person("Jim","Halpert")])
 # No output, since no longer interested
 
-# TODO: Subscribe to multiple values at the same time, 
+# TODO: Subscribe to multiple values at the same time,
 # notified only once when one or more change at the same time
 app.subscribe(lambda state: state.regional_managers,
               lambda state: state.employees,
@@ -229,3 +235,11 @@ def on_bid_update(bid):
 This should be done with care as it has the possibility for creating an
 inconsistent state. The idea is that the first trapdoor, if implemented, should
 do exactly this, but automatically.
+
+### Atomic updates
+
+To implement atomic updates (apply all changes or none), the safest thing to do
+would be to copy the state, apply changes to the copy and then overwrite the
+original state.
+
+As this is a performance issue, it is currently left incomplete.
