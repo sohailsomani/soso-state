@@ -198,4 +198,10 @@ would result in a system that is effectively equivalent to hand-written code.
 This is the trapdoor for performance referenced earlier and I believe it would
 be very difficult to improve upon this performance for hand-written code. There
 are still other performance improvements that can be made, but this is the one
-that would probably overcome most performance-related objections.
+that could overcome performance issues if needed.
+
+This is not the only way to optimize the code, but given that most of the code
+the developer writes is **meta-programming**, it leaves lots of options open.
+
+As of yet, I haven't had to optimize this type of implementation at this level
+after having used it for about 3 years, so take from that what you will.
