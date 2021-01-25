@@ -133,7 +133,7 @@ Boring and straightforward
 
 ## Obvious low-hanging optimizations
 
-The most obvious optimization would be to convert the object traversal into
+The most obvious optimization would be to compile the state traversal into
 python code. This sounds complex and scary but isn't really. At the moment, we
 do something like this:
 
