@@ -8,11 +8,11 @@ setuptools.setup(
     version="0.0.1",
     author="Sohail Somani",
     author_email="me@sohailsomani.com",
-    description="Python 3.9+ application state container",
+    description="Python 3.8+ application state container",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/sohailsomani/soso-state",
-    packages=setuptools.find_packages(include=['soso.*']),
+    packages=['soso.state'],
     classifiers=[
         "Programming Language :: Python :: 3.8",
         "License :: OSI Approved :: MIT License",

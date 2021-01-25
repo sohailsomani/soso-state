@@ -36,7 +36,9 @@ class PropertyOp:
     key: typing.Any
     value: typing.Optional[typing.Any] = None
 
-    def execute(self, obj) -> typing.Tuple[typing.Optional[typing.Any], bool]:
+    def execute(
+            self, obj: typing.Any
+    ) -> typing.Tuple[typing.Optional[typing.Any], bool]:
         if self.access == AttributeAccess.GETATTR:
             return getattr(obj, self.key), False
         elif self.access == AttributeAccess.GETITEM:
@@ -58,7 +60,7 @@ class PropertyOp:
                 obj[self.key] = self.value
             return None, changed
 
-    def get_value(self, obj) -> typing.Any:
+    def get_value(self, obj: typing.Any) -> typing.Any:
         if self.access in [AttributeAccess.GETATTR, AttributeAccess.SETATTR]:
             return getattr(obj, self.key)
         else:
@@ -72,17 +74,18 @@ class PropertyOp:
 class Node:
     children: typing.DefaultDict[str, "Node"] = field(
         default_factory=lambda: defaultdict(Node))
-    event: Event = field(default_factory=lambda: Event("NodeUpdateEvent"))
+    event: Event = field(
+        default_factory=lambda: Event("NodeUpdateEvent"))  # type:ignore
     # The type of access to this node
     op: typing.Optional[PropertyOp] = None
 
 
 class Model(typing.Generic[StateT]):
-    def __init__(self):
-        model_klass = self.__orig_bases__[-1]
+    def __init__(self) -> None:
+        model_klass = self.__orig_bases__[-1]  # type:ignore
         self.__state_klass = state_klass = typing.get_args(model_klass)[0]
         assert is_dataclass(state_klass)
-        self.__current_state = state_klass()
+        self.__current_state: StateT = state_klass()
         self.__root = Node()
 
     def __get_node_for_ops(self, ops: typing.List[PropertyOp]) -> Node:
@@ -96,7 +99,7 @@ class Model(typing.Generic[StateT]):
         root.event._name = ".".join(children)
         return root
 
-    def __get_value_for_ops(self, ops: typing.List[PropertyOp]) -> Node:
+    def __get_value_for_ops(self, ops: typing.List[PropertyOp]) -> typing.Any:
         root: typing.Any = self.__current_state
         for op in ops:
             root = op.get_value(root)
@@ -115,7 +118,7 @@ class Model(typing.Generic[StateT]):
         self, func: PropertyCallback
     ) -> typing.Tuple[Event, typing.List[PropertyOp]]:
         proxy = Proxy()
-        func(proxy)  # type: ignore
+        func(proxy)
         ops = _get_ops(proxy)
 
         node = self.__get_node_for_ops(ops)
@@ -141,13 +144,22 @@ class Model(typing.Generic[StateT]):
             except Exception:
                 logging.getLogger(__name__).info(traceback.format_exc())
 
-    def update(self, *args, **kwargs: typing.Any):
+    @typing.overload
+    def update(self, **kwargs: typing.Any) -> None:
+        ...
+
+    @typing.overload
+    def update(self, func: typing.Callable[[StateT], None]) -> None:
+        ...
+
+    def update(self, *args: typing.Callable[[StateT], None],
+               **kwargs: typing.Any) -> None:
         func: typing.Callable[[StateT], None]
 
         if len(args) == 0:
             assert len(kwargs) != 0
 
-            def doit(state):
+            def doit(state: StateT) -> None:
                 for key, value in kwargs.items():
                     setattr(state, key, value)
 
@@ -160,9 +172,9 @@ class Model(typing.Generic[StateT]):
 
         # Get all changes
         proxy = Proxy()
-        func(proxy)
+        func(proxy)  # type: ignore
         ops = _get_ops(proxy)
-        obj = self.__current_state
+        obj: typing.Optional[typing.Any] = self.__current_state
 
         # Apply changes tos tate
         stmts: typing.List[typing.List[PropertyOp]] = []
@@ -211,7 +223,7 @@ class Model(typing.Generic[StateT]):
 
 
 class Proxy:
-    def __init__(self):
+    def __init__(self) -> None:
         self.__dict__['__ops'] = []
 
     def __setattr__(self, name: str, value: typing.Any) -> None:
@@ -223,14 +235,14 @@ class Proxy:
                                                  name))
         return self
 
-    def __setitem__(self, key, value) -> None:
+    def __setitem__(self, key: typing.Any, value: typing.Any) -> None:
         self.__dict__['__ops'].append(
             PropertyOp(AttributeAccess.SETITEM, key, value))
 
-    def __getitem__(self, key) -> "Proxy":
+    def __getitem__(self, key: typing.Any) -> "Proxy":
         self.__dict__['__ops'].append(PropertyOp(AttributeAccess.GETITEM, key))
         return self
 
 
-def _get_ops(proxy: Proxy):
-    return proxy.__dict__['__ops']
+def _get_ops(proxy: Proxy) -> typing.List[PropertyOp]:
+    return proxy.__dict__['__ops']  # type:ignore
