@@ -186,7 +186,6 @@ So obviously, caching and compiling the traversals that are needed:
 would result in a system that is effectively equivalent to hand-written code.
 
 This is the trapdoor for performance referenced earlier and I believe it would
-be very difficult to improve upon this performance for hand-written code.
-
-There are still other performance improvements that can be made, but this is the
-one that would probably overcome any performance-related objections.
+be very difficult to improve upon this performance for hand-written code. There
+are still other performance improvements that can be made, but this is the one
+that would probably overcome most performance-related objections.
