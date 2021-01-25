@@ -1,6 +1,6 @@
 # soso.state
 
-`soso.state` is a Python 3.8+ implementation of a general state container
+`soso.state` is a Python 3.8+ implementation of a general state management
 pattern. Its goals are similar to Redux, but where it differs is that it
 is designed to perform well by default through the use of little to no 
 copying and a focus on finely grained notifications for any subset of the
