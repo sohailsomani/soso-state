@@ -6,6 +6,12 @@ differs is that it is designed to perform well by default through the
 use of little to no copying and a focus on efficient, finely grained
 notifications for any subset of the application state.
 
+* [Status](#status)
+* [Main Benefits](#main-benefits)
+* [Quickstart](#quickstart)
+* [Implementation](#implementation)
+* [Obvious optimizations](#obvious-optimizations)
+
 ## Status
 
 Although this particular library is new, multiple versions of it are 
@@ -131,7 +137,7 @@ consistency in the syntax for events, state viewing and state updating.
 
 Boring and straightforward
 
-## Obvious low-hanging optimizations
+## Obvious optimizations
 
 The most obvious optimization would be to compile the state traversal into
 python code. This sounds complex and scary but isn't really. At the moment, we
