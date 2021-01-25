@@ -7,7 +7,7 @@ T = typing.TypeVar('T')
 
 
 class Model(typing.Generic[StateT]):
-    def subscribe(self, func: typing.Callable[[StateT], T],
+    def subscribe(self, prop_get_func: typing.Callable[[StateT], T],
                   callback: typing.Callable[[T], typing.Any]) -> EventToken:
         ...
 
