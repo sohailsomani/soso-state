@@ -150,6 +150,11 @@ Boring and straightforward
 
 ## Obvious optimizations
 
+**Note:** At the moment, [test_benchmark.py](tests/test_benchmark.py) shows that
+setting a value through a `soso.state.Model` and processing the event is about
+2x as slow as doing it by hand which is approximately what would be expected for
+completely non-optimized code.
+
 The most obvious optimization would be to compile the state traversal into
 python code. This sounds complex and scary but isn't really. At the moment, we
 do something like this:
