@@ -3,17 +3,12 @@ import typing
 from soso.event import Event, EventToken
 
 StateT = typing.TypeVar('StateT')
-
-
-class PropertyCallback(typing.Protocol):
-    def __call__(self, state: StateT) -> typing.Any:
-        ...
+T = typing.TypeVar('T')
 
 
 class Model(typing.Generic[StateT]):
-    def subscribe(
-            self, func: PropertyCallback,
-            callback: typing.Callable[[typing.Any], typing.Any]) -> EventToken:
+    def subscribe(self, func: typing.Callable[[StateT], T],
+                  callback: typing.Callable[[T], typing.Any]) -> EventToken:
         ...
 
     @typing.overload
@@ -28,7 +23,7 @@ class Model(typing.Generic[StateT]):
     def state(self) -> StateT:
         ...
 
-    def event(self, property: PropertyCallback) -> Event:
+    def event(self, property: typing.Callable[[StateT], T]) -> Event:
         ...
 
     def snapshot(self) -> StateT:
