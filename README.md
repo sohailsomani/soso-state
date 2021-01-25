@@ -9,6 +9,7 @@ notifications for any subset of the application state.
 * [Status](#status)
 * [Main Benefits](#main-benefits)
 * [Quickstart](#quickstart)
+* [Motivation](#motivation)
 * [Implementation](#implementation)
 * [Obvious optimizations](#obvious-optimizations)
 
@@ -16,7 +17,7 @@ notifications for any subset of the application state.
 
 Although this particular library is new, multiple versions of it are 
 in production in private in a variety of industries ranging from healthcare
-to finance. See the Motivation section below.
+to finance. See the [Motivation](#motivation) section below.
 
 ## Main Benefits
 
