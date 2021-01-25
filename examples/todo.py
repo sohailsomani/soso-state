@@ -1,3 +1,4 @@
+import pickle
 import tkinter as tk
 import typing
 from dataclasses import dataclass, field
@@ -7,8 +8,8 @@ from soso import state
 
 @dataclass
 class Todo:
-    done: bool = False
     description: str = ''
+    done: bool = False
 
 
 @dataclass
@@ -17,9 +18,6 @@ class TodoAppState:
 
 
 class TodoAppModel(state.Model[TodoAppState]):
-    def __init__(self) -> None:
-        super().__init__()
-
     def add_todo(self,text):
         assert text
         todo = Todo(description=text)
@@ -65,6 +63,16 @@ class UI(tk.Frame):
         self.entry_contents.set("")
 
 model = TodoAppModel()
+try:
+    with open('.todos','rb') as f:
+        snapshot = pickle.load(f)
+    model.restore(snapshot)
+except Exception:
+    pass
+
 root = tk.Tk()
 ui = UI(model, root)
 ui.mainloop()
+
+with open('.todos','wb') as f:
+    pickle.dump(model.snapshot(),f)
