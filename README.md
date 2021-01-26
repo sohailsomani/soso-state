@@ -33,7 +33,7 @@ that is wrong.
     * Single source of truth for entire application state
     * Easily implement [undo/redo](examples/undo.py)/[persistence](examples/todo.py)
 * Flexible:
-    * Subscribe to changes in any subset of the application state you are interested in
+    * Observe changes to any subset of the application state you are interested in
 * Efficient
     * Zero copying except for snapshot/restore functionality
     * Only events for data that is actually changed are propagated
@@ -77,13 +77,13 @@ app.update(
                Person("Pam","Beesly")]
 )
 
-# Subscribe to changes in the 0th position of the regional_managers array.
+# Observe changes in the 0th position of the regional_managers array.
 # The callback function is always called initially with the current values
-token = app.subscribe(lambda state: state.regional_managers[0],print)
+token = app.observe(lambda state: state.regional_managers[0],print)
 # Output: Person("Michael","Scott")
 
-# Subscribe to Pam's last name updates
-app.subscribe(lambda state: state.employees[1].last_name,print)
+# Observe changes to Pam's last name updates
+app.observe(lambda state: state.employees[1].last_name,print)
 
 # Update regional_managers and assistant_to_the_regional_managers atomically
 app.update(regional_managers = [Person("Dwight","Schrute")],
@@ -104,11 +104,11 @@ app.update(pam_gets_married)
 app.update(regional_managers = [Person("Jim","Halpert")])
 # No output, since no longer interested
 
-# TODO: Subscribe to multiple values at the same time,
+# TODO: Observe multiple values at the same time,
 # notified only once when one or more change at the same time
-app.subscribe(lambda state: state.regional_managers,
-              lambda state: state.employees,
-              print)
+app.observe(lambda state: state.regional_managers,
+            lambda state: state.employees,
+            print)
 # output: [Person("Jim","Halpert")] [Person("Pam","Halpert")]
 ```
 

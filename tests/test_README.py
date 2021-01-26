@@ -47,8 +47,8 @@ class TestREADME(unittest.TestCase):
 
         x: AppState
         regional_manager = MagicMock()
-        # Subscribe to changes in the first regional manager, a token is
-        # returned to allow you to disconnect later if needed.
+        # Observe changes in the first regional manager, a token is returned to
+        # allow you to disconnect later if needed.
         token = app.observe(lambda x: x.regional_managers[0], regional_manager)
         # Whenever we observe, the callback is always initially called with
         # the current value.
