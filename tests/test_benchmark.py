@@ -40,7 +40,7 @@ def test_fancy(benchmark):
         assert e == 42
         emitted.append(True)
 
-    model.subscribe(lambda x: x.value, on_update)
+    model.observe(lambda x: x.value, on_update)
 
     @benchmark
     def doit():

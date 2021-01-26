@@ -49,14 +49,13 @@ class TestREADME(unittest.TestCase):
         regional_manager = MagicMock()
         # Subscribe to changes in the first regional manager, a token is
         # returned to allow you to disconnect later if needed.
-        token = app.subscribe(lambda x: x.regional_managers[0],
-                              regional_manager)
-        # Whenever we subscribe, the callback is always initially called with
+        token = app.observe(lambda x: x.regional_managers[0], regional_manager)
+        # Whenever we observe, the callback is always initially called with
         # the current value.
         regional_manager.assert_called_with(Person("Michael", "Scott"))
 
         pams_last_name = MagicMock()
-        app.subscribe(lambda x: x.employees[1].last_name, pams_last_name)
+        app.observe(lambda x: x.employees[1].last_name, pams_last_name)
         pams_last_name.assert_called_with("Beesly")
 
         # For more complex property changes, use a function. Note that the
@@ -70,7 +69,7 @@ class TestREADME(unittest.TestCase):
 
         self.assertEqual(app.state.employees[1].last_name, "Halpert")
         # Note that the callback was called with exactly the attribute that was
-        # subscribed to: x.employees[1].last_name
+        # observed to: x.employees[1].last_name
         pams_last_name.assert_called_with("Halpert")
 
         regional_manager.reset_mock()

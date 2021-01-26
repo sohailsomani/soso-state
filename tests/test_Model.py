@@ -21,7 +21,7 @@ class TestModel(unittest.TestCase):
         model = Model()
         mock = MagicMock()
 
-        model.subscribe(lambda x: x.value, mock)
+        model.observe(lambda x: x.value, mock)
         mock.assert_called_with(0)
 
         model.update(value=25)
@@ -46,7 +46,7 @@ class TestModel(unittest.TestCase):
         self.assertIsInstance(snapshot, int)
 
         mock = MagicMock()
-        model.subscribe(lambda x: x.value, mock)
+        model.observe(lambda x: x.value, mock)
         mock.assert_called_with(69)
         mock.reset_mock()
         model.restore(snapshot, lambda x: x.value)
@@ -58,7 +58,7 @@ class TestModel(unittest.TestCase):
         model = Model()
         mock = MagicMock()
 
-        model.subscribe(lambda x: x, mock)
+        model.observe(lambda x: x, mock)
         mock.assert_called_with(State(value=0))
 
         mock.reset_mock()
@@ -69,7 +69,7 @@ class TestModel(unittest.TestCase):
         model = Model()
         mock = MagicMock()
 
-        model.subscribe(lambda x: x.value, mock)
+        model.observe(lambda x: x.value, mock)
         mock.assert_called_with(0)
 
         mock.reset_mock()
@@ -83,7 +83,7 @@ class TestModel(unittest.TestCase):
         mock = MagicMock()
         # doesn't exist yet, so can't listen to it
         self.assertRaises(KeyError,
-                          lambda: model.subscribe(lambda x: x.d["key"], mock))
+                          lambda: model.observe(lambda x: x.d["key"], mock))
         mock.assert_not_called()
 
         def update(state: State) -> None:
@@ -91,7 +91,7 @@ class TestModel(unittest.TestCase):
 
         model.update(update)
         mock.reset_mock()
-        model.subscribe(lambda x: x.d["key"], mock)
+        model.observe(lambda x: x.d["key"], mock)
         mock.assert_called_with("value")
 
         def update2(state: State) -> None:

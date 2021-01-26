@@ -63,7 +63,7 @@ def make_undoable(
         finally:
             undo.is_active = False
 
-    model.subscribe(prop, on_state_update)
+    model.observe(prop, on_state_update)
 
     return on_do_undo
 
@@ -126,8 +126,8 @@ class UI(tk.Frame):
         self.pack()
 
         x: TodoAppState
-        self.__model.subscribe(lambda x: x.todos,
-                               lambda todos: self.__update_listbox(todos))
+        self.__model.observe(lambda x: x.todos,
+                             lambda todos: self.__update_listbox(todos))
 
     def __update_listbox(self, todos: typing.List[Todo]) -> None:
         t: Todo
