@@ -231,10 +231,9 @@ class Model(typing.Generic[StateT]):
                     # if not changed, ignore this statement
                     curr_stmt = []
 
-        # append last stmt (technically, shouldn't happen if users write
-        # correct code, might want an assertion here)
-        if curr_stmt:
-            stmts.append(curr_stmt)
+        # if the last expression had no set, then that means it was a read
+        # without a write. No good. Let the user know.
+        assert not curr_stmt
 
         if len(stmts) == 0:
             return
