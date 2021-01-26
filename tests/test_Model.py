@@ -57,7 +57,10 @@ class TestModel(unittest.TestCase):
     def test_snapshot_subtree_getitem(self) -> None:
         model = Model()
         x: State
-        subtree = lambda x: x.d["hello"]
+
+        def subtree(state: State) -> str:
+            return state.d["hello"]
+
         model.update(d=dict(hello="goodbye"))
         snapshot = model.snapshot(subtree)
         model.update(d=dict(hello="world"))
@@ -67,17 +70,19 @@ class TestModel(unittest.TestCase):
         model.observe(subtree, mock)
         mock.assert_called_with("world")
         mock.reset_mock()
-        model.restore(snapshot,subtree)
+        model.restore(snapshot, subtree)
         self.assertEqual(model.state.d["hello"], "goodbye")
         mock.assert_called_with("goodbye")
         mock.assert_called_once()
 
     def test_bad_update(self) -> None:
         model = Model()
-        def update(x):
+
+        def update(x: State) -> None:
             # don't assign, but read
             x.value
-        self.assertRaises(Exception,lambda: model.update(update))
+
+        self.assertRaises(Exception, lambda: model.update(update))
 
     def test_root_changes(self) -> None:
         model = Model()
