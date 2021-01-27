@@ -31,18 +31,24 @@ that is wrong.
 
 * Centralized:
     * Single source of truth for entire application state
-    * Easily implement [undo/redo](examples/undo.py)/[persistence](examples/todo.py)
+    * Easily implement
+      [undo/redo](examples/undo.py)/[persistence](examples/todo.py)
 * Flexible:
-    * Observe changes to any subset of the application state you are interested in
+    * Observe changes to any subset of the application state you are interested
+      in
 * Efficient
     * Zero copying except for snapshot/restore functionality
     * Only events for data that is actually changed are propagated
 * Predictable:
     * Consistent state => predictable application
+    * Using Python's optional strong static typing (no, really) to catch as many
+      errors as possible.
 
 ## Quickstart
 
-`$ pip install git+https://github.com/sohailsomani/soso-state`
+```sh
+$ python3 -m pip install git+https://github.com/sohailsomani/soso-state
+```
 
 **Note**: The most up-to-date version of this code is in
 [`test_README.py`](tests/test_README.py). Feel free to check out the code and

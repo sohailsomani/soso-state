@@ -1,3 +1,5 @@
 pytest
 pytest-benchmark
 pytest-cov
+pytest-profiling
+gprof2dot
