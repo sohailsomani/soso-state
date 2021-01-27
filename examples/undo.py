@@ -107,16 +107,16 @@ class UI(tk.Frame):
         self.entry_contents = tk.StringVar()
         self.entry["textvariable"] = self.entry_contents
         self.entry.bind('<Key-Return>', self.__add_todo)
-        self.entry.pack()
+        self.entry.pack(fill=tk.X)
 
         self.button = tk.Button()
         self.button["text"] = "Add TODO"
         self.button["command"] = self.__add_todo
-        self.button.pack()
+        self.button.pack(fill=tk.X)
 
         self.listbox_contents = tk.StringVar()
         self.listbox = tk.Listbox(listvariable=self.listbox_contents)
-        self.listbox.pack()
+        self.listbox.pack(fill=tk.BOTH, expand=1)
 
         self.undo = tk.Button()
         self.undo["text"] = "Undo"

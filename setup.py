@@ -14,7 +14,7 @@ setuptools.setup(
     description="Python 3.8+ application state container",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/sohailsomani/soso.state",
+    url="https://github.com/sohailsomani/soso-state",
     install_requires=[
         "soso-event @ git+https://github.com/sohailsomani/soso-event.git#egg=soso-event"
     ],
