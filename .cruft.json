@@ -1,0 +1,12 @@
+{
+    "template": "https://github.com/sohailsomani/soso-cookiecutter-python",
+    "commit": "7fd66e8af6acfbd9f4235e9032b31c5475714182",
+    "context": {
+        "cookiecutter": {
+            "project_name": "state",
+            "short_description": "Redux-inspired application state management library for Python 3.8+",
+            "_template": "https://github.com/sohailsomani/soso-cookiecutter-python"
+        }
+    },
+    "directory": null
+}
