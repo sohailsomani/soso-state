@@ -158,13 +158,11 @@ this record and emits the appropriate events.
 
 ## Profiling notes
 
-**Note:** See the output of [test_benchmark.py](tests/test_benchmark.py).
+**Note:** See the output of [test_benchmark.py](tests/test_benchmark.py)
+[here](https://github.com/sohailsomani/soso-state/runs/1807831827#step:5:132).
 
-After profiling, it turns out the slow part of the code is simply emitting the
-events. This can be optimized a zillion different ways and the majority of the
-slowdown is in the "extra smarts" for async code. That is, there is not much to
-do in this library. You can see this for yourself by running `tox` and
-inspecting `prof/combined.svg`.
+In a nutshell, an update+event emit takes ~14 microseconds as compared to a
+manual update + event which takes about ~2 microseconds.
 
 ### Atomic updates
 

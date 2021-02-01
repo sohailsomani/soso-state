@@ -1,6 +1,6 @@
 import typing
 
-from soso.event import Event, EventToken
+from soso.state.event import Event, EventToken
 
 StateT_contra = typing.TypeVar('StateT_contra', contravariant=True)
 StateT = typing.TypeVar('StateT')

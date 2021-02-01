@@ -3,7 +3,6 @@
 from dataclasses import dataclass
 
 from soso import state
-from soso.event import Event
 
 
 def test_raw(benchmark) -> None:
@@ -13,8 +12,8 @@ def test_raw(benchmark) -> None:
         assert e == 42
         emitted.append(True)
 
-    event = Event("Event")
-    event.connect(on_update, Event.Group.PROCESS)
+    event = state.Event("Event")
+    event.connect(on_update)
 
     @benchmark
     def doit():
@@ -45,6 +44,8 @@ def test_fancy(benchmark):
     @benchmark
     def doit():
         model.state.value = 0
-        model.update(value=42)
+        def update(state):
+            state.value = 42
+        model.update(update)
 
     assert emitted
