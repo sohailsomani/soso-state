@@ -11,7 +11,7 @@ regarding efficiency and structural organization.
 * [Status](#status): In daily use
 * [Main Benefits](#main-benefits)
 * [Quickstart](#quickstart)
-* [Motivation](#motivation): Don't Repeat Yourself)
+* [Motivation](#motivation): Don't Repeat Yourself
 * [Implementation](#implementation): Proxy -> writes -> events
 * [Profiling notes](#profiling-notes): Use PyPy 3.8 if perf critical, otherwise 14us overhead per update
 
