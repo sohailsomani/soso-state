@@ -13,7 +13,7 @@ regarding efficiency and structural organization.
 * [Quickstart](#quickstart)
 * [Motivation](#motivation)
 * [Implementation](#implementation)
-* [Obvious optimizations](#obvious-optimizations)
+* [Profiling notes](#profiling-notes)
 
 ## Status
 
