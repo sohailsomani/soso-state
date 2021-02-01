@@ -8,11 +8,11 @@ grained notifications for any subset of the application state. Through the
 declarative approach, it is designed to centralize most, if not all decisions
 regarding efficiency and structural organization.
 
-* [Status](#status)
+* [Status](#status) (TL;DR in daily use)
 * [Main Benefits](#main-benefits)
 * [Quickstart](#quickstart)
-* [Motivation](#motivation)
-* [Implementation](#implementation)
+* [Motivation](#motivation) (TL;DR Don't Repeat Yourself)
+* [Implementation](#implementation) (TL;DR proxy -> writes -> events)
 * [Profiling notes](#profiling-notes) (TL;DR use PyPy 3.8 if perf critical)
 
 ## Status
