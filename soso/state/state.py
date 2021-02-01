@@ -4,7 +4,6 @@ import traceback
 import typing
 from collections import defaultdict
 from dataclasses import dataclass, field, is_dataclass
-from enum import Enum
 
 from soso.state.event import Event, EventCallback, EventToken
 
@@ -27,51 +26,18 @@ class StateUpdateCallback(typing.Generic[StateT_contra], typing.Protocol):
         ...
 
 
-class AttributeAccess(Enum):
-    SETATTR = 1
-    GETATTR = 2
-    SETITEM = 3
-    GETITEM = 4
-
-
-@dataclass
-class PropertyOp:
-    access: AttributeAccess
-    key: typing.Any
-    value: typing.Optional[typing.Any] = None
+class PropertyOp(typing.Protocol):
+    @property
+    def key(self) -> typing.Any:
+        ...
 
     def execute(
             self, obj: typing.Any
     ) -> typing.Tuple[typing.Optional[typing.Any], bool]:
-        if self.access == AttributeAccess.GETATTR:
-            return getattr(obj, self.key), False
-        elif self.access == AttributeAccess.GETITEM:
-            return obj[self.key], False
-        elif self.access == AttributeAccess.SETATTR:
-            curr_value = getattr(obj, self.key)
-            changed = curr_value != self.value
-            if changed:
-                setattr(obj, self.key, self.value)
-            return None, changed
-        else:
-            assert self.access == AttributeAccess.SETITEM
-            try:
-                curr_value = obj[self.key]
-                changed = curr_value != self.value
-            except KeyError:
-                changed = True
-            if changed:
-                obj[self.key] = self.value
-            return None, changed
+        ...
 
-    def get_value(self, obj: typing.Any) -> typing.Any:
-        if self.access in [AttributeAccess.GETATTR, AttributeAccess.SETATTR]:
-            return getattr(obj, self.key)
-        else:
-            assert self.access in [
-                AttributeAccess.GETITEM, AttributeAccess.SETITEM
-            ]
-            return obj[self.key]
+    def get_value(self, obj: typing.Any) -> typing.Optional[typing.Any]:
+        ...
 
 
 @dataclass
@@ -94,13 +60,9 @@ class Model(typing.Generic[StateT]):
 
     def __get_node_for_ops(self, ops: typing.List[PropertyOp]) -> Node:
         root: Node = self.__root
-        children = []
         for op in ops:
-            child = op.key
-            children.append(str(child))
-            root = root.children[child]
+            root = root.children[op.key]
             root.op = op
-        root.event._name = ".".join(children)
         return root
 
     def __get_value_for_ops(self, ops: typing.List[PropertyOp]) -> typing.Any:
@@ -128,12 +90,12 @@ class Model(typing.Generic[StateT]):
         node = self.__get_node_for_ops(ops)
         return node.event, ops
 
-    def event_trapdoor(self, property: PropertyCallback[StateT,
-                                                        T]) -> Event[T]:
+    def event(self, property: PropertyCallback[StateT,
+                                               T]) -> Event[T]:
         return self.__event(property)[0]
 
     async def wait_for(self, property: PropertyCallback[StateT, T]) -> T:
-        result = await self.event_trapdoor(property)
+        result = await self.event(property)
         return result  # type:ignore
 
     def snapshot(self,
@@ -154,13 +116,12 @@ class Model(typing.Generic[StateT]):
             property(proxy)
             ops = _get_ops(typing.cast(Proxy, proxy))
             node = self.__get_node_for_ops(ops)
-            if ops[-1].access == AttributeAccess.GETATTR:
-                ops[-1].access = AttributeAccess.SETATTR
-            elif ops[-1].access == AttributeAccess.GETITEM:
-                ops[-1].access = AttributeAccess.SETITEM
+            if isinstance(ops[-1], GetAttr):
+                ops[-1] = SetAttr(ops[-1].key, snapshot)
+            elif isinstance(ops[-1], GetItem):
+                ops[-1] = SetItem(ops[-1].key, snapshot)
             else:
                 assert False
-            ops[-1].value = snapshot
             obj: typing.Optional[typing.Any] = self.__current_state
             for op in ops:
                 obj, _ = op.execute(obj)
@@ -256,25 +217,87 @@ class Model(typing.Generic[StateT]):
         return self.__current_state
 
 
+@dataclass
+class GetAttr:
+    key: typing.Any
+
+    def execute(
+            self, obj: typing.Any
+    ) -> typing.Tuple[typing.Optional[typing.Any], bool]:
+        return getattr(obj, self.key), False
+
+    def get_value(self, obj: typing.Any) -> typing.Optional[typing.Any]:
+        return getattr(obj, self.key)
+
+
+@dataclass
+class SetAttr:
+    key: typing.Any
+    value: typing.Any
+
+    def execute(
+            self, obj: typing.Any
+    ) -> typing.Tuple[typing.Optional[typing.Any], bool]:
+        curr_value = getattr(obj, self.key)
+        changed = curr_value != self.value
+        if changed:
+            setattr(obj, self.key, self.value)
+        return None, changed
+
+    def get_value(self, obj: typing.Any) -> typing.Optional[typing.Any]:
+        return getattr(obj, self.key)
+
+
+@dataclass
+class GetItem:
+    key: typing.Any
+
+    def execute(
+            self, obj: typing.Any
+    ) -> typing.Tuple[typing.Optional[typing.Any], bool]:
+        return obj[self.key], False
+
+    def get_value(self, obj: typing.Any) -> typing.Optional[typing.Any]:
+        return obj[self.key]
+
+
+@dataclass
+class SetItem:
+    key: typing.Any
+    value: typing.Any
+
+    def execute(
+            self, obj: typing.Any
+    ) -> typing.Tuple[typing.Optional[typing.Any], bool]:
+        try:
+            curr_value = obj[self.key]
+            changed = curr_value != self.value
+        except KeyError:
+            changed = True
+        if changed:
+            obj[self.key] = self.value
+        return None, changed
+
+    def get_value(self, obj: typing.Any) -> typing.Any:
+        return obj[self.key]
+
+
 class Proxy:
     def __init__(self) -> None:
         self.__dict__['__ops'] = []
 
     def __setattr__(self, name: str, value: typing.Any) -> None:
-        self.__dict__['__ops'].append(
-            PropertyOp(AttributeAccess.SETATTR, name, value))
+        self.__dict__['__ops'].append(SetAttr(name, value))
 
     def __getattr__(self, name: str) -> "Proxy":
-        self.__dict__['__ops'].append(PropertyOp(AttributeAccess.GETATTR,
-                                                 name))
+        self.__dict__['__ops'].append(GetAttr(name))
         return self
 
     def __setitem__(self, key: typing.Any, value: typing.Any) -> None:
-        self.__dict__['__ops'].append(
-            PropertyOp(AttributeAccess.SETITEM, key, value))
+        self.__dict__['__ops'].append(SetItem(key, value))
 
     def __getitem__(self, key: typing.Any) -> "Proxy":
-        self.__dict__['__ops'].append(PropertyOp(AttributeAccess.GETITEM, key))
+        self.__dict__['__ops'].append(GetItem(key))
         return self
 
 

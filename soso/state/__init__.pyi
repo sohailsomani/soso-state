@@ -42,9 +42,6 @@ class Model(typing.Generic[StateT]):
                                        T]) -> T:
         ...
 
-    def event_trapdoor(self, property: PropertyCallback[StateT, T]) -> Event[T]:
-        ...
-
     @typing.overload
     def snapshot(self) -> StateT:
         ...
