@@ -159,7 +159,7 @@ this record and emits the appropriate events.
 ## Profiling notes
 
 **Note:** See the output of [test_benchmark.py](tests/test_benchmark.py)
-[here](https://github.com/sohailsomani/soso-state/runs/1807831827#step:5:132).
+[here](https://github.com/sohailsomani/soso-state/runs/1809770788#step:5:134).
 
 In a nutshell, an update+event emit takes ~14 microseconds as compared to a
 manual update + event which takes about ~2 microseconds.
