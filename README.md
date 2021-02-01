@@ -13,7 +13,7 @@ regarding efficiency and structural organization.
 * [Quickstart](#quickstart)
 * [Motivation](#motivation)
 * [Implementation](#implementation)
-* [Profiling notes](#profiling-notes)
+* [Profiling notes](#profiling-notes) (TL;DR use PyPy 3.8 if perf critical)
 
 ## Status
 
