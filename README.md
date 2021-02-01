@@ -158,16 +158,13 @@ this record and emits the appropriate events.
 
 ## Profiling notes
 
-**Note:** At the moment, [test_benchmark.py](tests/test_benchmark.py) shows that
-setting a value through a `soso.state.Model** and processing the event is about
-2x as slow as doing it by hand which is approximately what would be expected for
-completely non-optimized code.
+**Note:** See the output of [test_benchmark.py](tests/test_benchmark.py).
 
-However, after profiling, it turns out the slow part of the code is simply
-emitting the events. This can be optimized a zillion different ways and the
-majority of the slowdown is in the "extra smarts" for async code. That is, there
-is not much to do in this library. You can see this for yourself by running
-`tox` and inspecting `prof/combined.svg`.
+After profiling, it turns out the slow part of the code is simply emitting the
+events. This can be optimized a zillion different ways and the majority of the
+slowdown is in the "extra smarts" for async code. That is, there is not much to
+do in this library. You can see this for yourself by running `tox` and
+inspecting `prof/combined.svg`.
 
 ### Atomic updates
 
