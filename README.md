@@ -176,3 +176,23 @@ would be to copy the state, apply changes to the copy and then overwrite the
 original state.
 
 As this is a performance issue, it is currently left incomplete.
+
+However, it could be done with a context manager. Note that this would not
+prevent events from propagating so its probably useless:
+
+```python
+from contextlib import contextmanager
+def atomic_updates(model):
+    snapshot = model.snapshot()
+    try:
+        yield
+    except:
+        model.restore(snapshot)
+
+...
+with atomic_updates(model):
+    model.update(hello="goodbye")
+    def update(x):
+        raise RuntimeError()
+    model.update(update) # oops, error, no changes made
+```
