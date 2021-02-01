@@ -1,7 +1,6 @@
 import unittest
 
-from soso.state.state import (AttributeAccess, PropertyOp,  # type: ignore
-                              Proxy, _get_ops)
+from soso.state.state import AttributeAccess, PropertyOp, Proxy, _get_ops
 
 
 class TestProxy(unittest.TestCase):

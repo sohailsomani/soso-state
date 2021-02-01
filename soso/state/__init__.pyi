@@ -1,17 +1,12 @@
 import typing
 
-from soso.state.event import Event, EventToken
+from soso.state.event import Event, EventCallback, EventToken
 
 StateT_contra = typing.TypeVar('StateT_contra', contravariant=True)
 StateT = typing.TypeVar('StateT')
 T = typing.TypeVar('T')
 T_contra = typing.TypeVar('T_contra', contravariant=True)
 T_co = typing.TypeVar('T_co', covariant=True)
-
-
-class EventCallback(typing.Generic[T_contra], typing.Protocol):
-    def __call__(self, __value: T_contra) -> typing.Optional[typing.Any]:
-        ...
 
 
 class PropertyCallback(typing.Generic[StateT_contra, T_co], typing.Protocol):
@@ -47,7 +42,7 @@ class Model(typing.Generic[StateT]):
                                        T]) -> T:
         ...
 
-    def event_trapdoor(self, property: PropertyCallback[StateT, T]) -> Event:
+    def event_trapdoor(self, property: PropertyCallback[StateT, T]) -> Event[T]:
         ...
 
     @typing.overload

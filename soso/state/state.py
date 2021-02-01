@@ -6,20 +6,15 @@ from collections import defaultdict
 from dataclasses import dataclass, field, is_dataclass
 from enum import Enum
 
-from soso.state.event import Event, EventToken
+from soso.state.event import Event, EventCallback, EventToken
 
-__all__ = ('Model')
+__all__ = ['Model', 'StateT', 'T', 'PropertyCallback']
 
 StateT_contra = typing.TypeVar('StateT_contra', contravariant=True)
 StateT = typing.TypeVar('StateT')
 T = typing.TypeVar('T')
 T_contra = typing.TypeVar('T_contra', contravariant=True)
 T_co = typing.TypeVar('T_co', covariant=True)
-
-
-class EventCallback(typing.Generic[T_contra], typing.Protocol):
-    def __call__(self, __value: T_contra) -> typing.Optional[typing.Any]:
-        ...
 
 
 class PropertyCallback(typing.Generic[StateT_contra, T_co], typing.Protocol):
@@ -83,8 +78,8 @@ class PropertyOp:
 class Node:
     children: typing.DefaultDict[str, "Node"] = field(
         default_factory=lambda: defaultdict(Node))
-    event: Event = field(
-        default_factory=lambda: Event("NodeUpdateEvent"))  # type:ignore
+    event: Event[typing.Any] = field(
+        default_factory=lambda: Event("NodeUpdateEvent"))
     # The type of access to this node
     op: typing.Optional[PropertyOp] = None
 
@@ -124,21 +119,22 @@ class Model(typing.Generic[StateT]):
         return token
 
     def __event(
-        self, func: PropertyCallback
-    ) -> typing.Tuple[Event, typing.List[PropertyOp]]:
-        proxy = Proxy()
+        self, func: PropertyCallback[StateT, T]
+    ) -> typing.Tuple[Event[T], typing.List[PropertyOp]]:
+        proxy: StateT = typing.cast(StateT, Proxy())
         func(proxy)
-        ops = _get_ops(proxy)
+        ops = _get_ops(proxy)  # type:ignore
 
         node = self.__get_node_for_ops(ops)
         return node.event, ops
 
-    def event_trapdoor(self, property: PropertyCallback) -> Event:
+    def event_trapdoor(self, property: PropertyCallback[StateT,
+                                                        T]) -> Event[T]:
         return self.__event(property)[0]
 
-    async def wait_for(self, property: PropertyCallback) -> T:
+    async def wait_for(self, property: PropertyCallback[StateT, T]) -> T:
         result = await self.event_trapdoor(property)
-        return result
+        return result  # type:ignore
 
     def snapshot(self,
                  property: PropertyCallback[StateT, T] = lambda x: x) -> T:

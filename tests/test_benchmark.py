@@ -44,8 +44,10 @@ def test_fancy(benchmark):
     @benchmark
     def doit():
         model.state.value = 0
+
         def update(state):
             state.value = 42
+
         model.update(update)
 
     assert emitted
