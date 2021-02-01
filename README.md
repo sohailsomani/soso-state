@@ -152,100 +152,22 @@ consistency in the syntax for events, state viewing and state updating.
 
 ## Implementation
 
-Boring and straightforward
+Boring and straightforward. Your state update function gets a proxy. The proxy
+records what you set. The `update` function then updates the actual state using
+this record and emits the appropriate events.
 
-## Obvious optimizations
+## Profiling notes
 
 **Note:** At the moment, [test_benchmark.py](tests/test_benchmark.py) shows that
-setting a value through a `soso.state.Model` and processing the event is about
+setting a value through a `soso.state.Model** and processing the event is about
 2x as slow as doing it by hand which is approximately what would be expected for
 completely non-optimized code.
 
-The most obvious optimization would be to compile the state traversal into
-python code. This sounds complex and scary but isn't really. At the moment, we
-do something like this:
-
-```python
-root = self.__current_state
-for prop in properties:
-  root = getattr(root,prop)
-```
-
-This code compiles down to:
-
-```python
-  2           0 LOAD_FAST                1 (properties)
-              2 GET_ITER
-        >>    4 FOR_ITER                14 (to 20)
-              6 STORE_FAST               2 (prop)
-
-  3           8 LOAD_GLOBAL              0 (getattr)
-             10 LOAD_FAST                0 (root)
-             12 LOAD_FAST                2 (prop)
-             14 CALL_FUNCTION            2
-             16 STORE_FAST               0 (root)
-             18 JUMP_ABSOLUTE            4
-
-  4     >>   20 LOAD_FAST                0 (root)
-             22 RETURN_VALUE
-```
-
-Whereas the hand-written code:
-
-```python
-root = self.__current_state.property1.property2
-```
-
-compiles to:
-
-```python
-  2           0 LOAD_FAST                0 (root)
-              2 LOAD_ATTR                0 (a)
-              4 LOAD_ATTR                1 (b)
-              6 RETURN_VALUE
-```
-
-So obviously, caching and compiling the traversals that are needed:
-
-1. The traversal to find the correct event to emit
-2. The traversal to find the current property
-3. The traversal to set the new value
-
-would result in a system that is effectively equivalent to hand-written code.
-
-This is the trapdoor for performance referenced earlier and I believe it would
-be very difficult to improve upon this performance for hand-written code. There
-are still other performance improvements that can be made, but this is the one
-that could overcome performance issues if needed.
-
-This is not the only way to optimize the code, but given that most of the code
-the developer writes is **meta-programming**, it leaves lots of options open.
-
-As of yet, I haven't had to optimize this type of implementation at this level
-after having used it for about 3 years, including in a situation where we had
-real-time sensor updates and needed to maintain 60FPS so take from that what you
-will.
-
-Not to say I wouldn't enjoy doing the above :-)
-
-### A second trapdoor
-
-Say you have a real-time data feed coming in and you _really_ don't like the
-overhead of `app.update()` for the purpose of notifications, in that case you
-can do something like:
-
-```python
-bid_event = app.event(lambda x: x.stock["IBM"].bid)
-...
-def on_bid_update(bid):
-  # manually update the state and emit the event
-  app.state.stock["IBM"].bid = bid
-  bid_event.emit(bid)
-```
-
-This should be done with care as it has the possibility for creating an
-inconsistent state. The idea is that the first trapdoor, if implemented, should
-do exactly this, but automatically.
+However, after profiling, it turns out the slow part of the code is simply
+emitting the events. This can be optimized a zillion different ways and the
+majority of the slowdown is in the "extra smarts" for async code. That is, there
+is not much to do in this library. You can see this for yourself by running
+`tox` and inspecting `prof/combined.svg`.
 
 ### Atomic updates
 
