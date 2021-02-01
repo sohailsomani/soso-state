@@ -8,12 +8,12 @@ grained notifications for any subset of the application state. Through the
 declarative approach, it is designed to centralize most, if not all decisions
 regarding efficiency and structural organization.
 
-* [Status](#status): in daily use)
+* [Status](#status): In daily use
 * [Main Benefits](#main-benefits)
 * [Quickstart](#quickstart)
 * [Motivation](#motivation): Don't Repeat Yourself)
-* [Implementation](#implementation): proxy -> writes -> events)
-* [Profiling notes](#profiling-notes): use PyPy 3.8 if perf critical, otherwise 14us overhead per update
+* [Implementation](#implementation): Proxy -> writes -> events
+* [Profiling notes](#profiling-notes): Use PyPy 3.8 if perf critical, otherwise 14us overhead per update
 
 ## Status
 
