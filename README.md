@@ -161,8 +161,13 @@ this record and emits the appropriate events.
 **Note:** See the output of [test_benchmark.py](tests/test_benchmark.py)
 [here](https://github.com/sohailsomani/soso-state/runs/1809770788#step:5:134).
 
-In a nutshell, an update+event emit takes ~14 microseconds as compared to a
-manual update + event which takes about ~2 microseconds.
+In a nutshell, for CPython update+event emit takes ~14 microseconds as compared
+to a manual update + event which takes about ~2 microseconds.
+
+For pypy3.8, update+event emit takes 300 nanoseconds as compared to a manual
+update + event which takes 200 nanoseconds.
+
+So if performance is a major concern, then use pypy3.8.
 
 ### Atomic updates
 
