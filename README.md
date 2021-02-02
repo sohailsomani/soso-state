@@ -134,6 +134,21 @@ app.update(regional_managers = [Person("Pam","Halpert")],
 
 ## Motivation
 
+See
+[here](https://github.com/reduxjs/reselect#motivation-for-memoized-selectors)
+for an excellent example of where the Redux approach has issues.
+
+Then multiply the proposed solution (memoized selectors) by the size of your
+team and you will have so much repetitive code that the actual logic of your app
+will be buried within obscure incantations and cache bugs that will drive you
+crazy. Look no further than
+[here](https://github.com/reduxjs/reselect#sharing-selectors-with-props-across-multiple-component-instances)
+for evidence of the type of thing you can expect to see.
+
+The goal then, is to achieve the same performance improvements, without writing
+a ton of unnecessary code both as part of a library and on the part of the
+developer. A lazy developer is a good developer.
+
 The original version of this implementation was written in Typescript by yours
 truly and is very similar in spirit. Alas, that version is in some corporate
 repository somewhere making lives easier for a select few. Indeed, a separate

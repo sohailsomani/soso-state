@@ -90,8 +90,7 @@ class Model(typing.Generic[StateT]):
         node = self.__get_node_for_ops(ops)
         return node.event, ops
 
-    def event(self, property: PropertyCallback[StateT,
-                                               T]) -> Event[T]:
+    def event(self, property: PropertyCallback[StateT, T]) -> Event[T]:
         return self.__event(property)[0]
 
     async def wait_for(self, property: PropertyCallback[StateT, T]) -> T:

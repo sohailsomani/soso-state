@@ -26,7 +26,7 @@ class AppModel(state.Model[AppState]):
 
 
 class TestREADME(unittest.TestCase):
-    def test_README(self) -> None:
+    def test_readme(self) -> None:
         app = AppModel()
         # Add some initial values
         app.update(
