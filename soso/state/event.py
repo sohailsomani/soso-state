@@ -40,13 +40,11 @@ class Event(typing.Generic[T]):
     def _new_token(self) -> "EventToken":
         return EventToken(self)
 
-    def __await__(self) -> typing.Generator[typing.Any, None, typing.Any]:
-        def callback(*args: typing.Any) -> None:
-            if not fut.done():
-                if len(args) == 1:
-                    fut.set_result(args[0])
-                else:
-                    fut.set_result(args)
+    def __await__(self) -> typing.Generator[None, None, T]:
+        def callback(arg: T) -> None:
+            assert not fut.done()
+            token.disconnect()
+            fut.set_result(arg)
 
         fut: asyncio.Future[typing.Any] = asyncio.Future()
         token = self.connect(callback)

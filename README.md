@@ -1,48 +1,15 @@
 # soso.state
 
-`soso.state` is a Python 3.8+ implementation of a general state management
-pattern using a mostly declarative syntax. It is inspired by and has goals
-similar to Redux, but where it differs is that it is designed to perform well by
-default through the use of little to no copying and a focus on efficient, finely
-grained notifications for any subset of the application state. Through the
-declarative approach, it is designed to centralize most, if not all decisions
-regarding efficiency and structural organization.
+`soso.state` is a Python 3.8+ implementation of a predictable state management
+pattern inspired by Redux, designed for execution efficiency and developer
+ergonomics.
 
+* [Quickstart](#quickstart)
 * [Status](#status): In daily use
 * [Main Benefits](#main-benefits)
-* [Quickstart](#quickstart)
-* [Motivation](#motivation): Don't Repeat Yourself
+* [Motivation](#motivation): Don't Repeat Yourself, Bugs Are Stupid
 * [Implementation](#implementation): Proxy -> writes -> events
 * [Profiling notes](#profiling-notes): Use PyPy 3.8 if perf critical, otherwise 14us overhead per update
-
-## Status
-
-Although this particular library is new, multiple versions of it are
-in production in private in a variety of industries ranging from healthcare
-to finance. See the [Motivation](#motivation) section below.
-
-In particular, although the design allows for atomic updates, those are not
-really implemented due to a lack of a pressing need. This means that if there
-are indeed errors during updates, it could leave things in an inconsistent
-state. But we don't write code with errors in it anyway. It's the outside world
-that is wrong.
-
-## Main Benefits
-
-* Centralized:
-    * Single source of truth for entire application state
-    * Easily implement
-      [undo/redo](examples/undo.py)/[persistence](examples/todo.py)
-* Flexible:
-    * Observe changes to any subset of the application state you are interested
-      in
-* Efficient
-    * Zero copying except for snapshot/restore functionality
-    * Only events for data that is actually changed are propagated
-* Predictable:
-    * Consistent state => predictable application
-    * Using Python's optional strong static typing (no, really) to catch as many
-      errors as possible.
 
 ## Quickstart
 
@@ -102,8 +69,8 @@ token.disconnect()
 # For more complex state updates, use a function. Note that
 # this is NOT the actual state object, it is a write-only proxy.
 # Do not try to read from the argument that is passed in
-def pam_gets_married(state:AppState):
-   state.employees[1].last_name = "Halpert"
+def pam_gets_married(proxy:AppState):
+   proxy.employees[1].last_name = "Halpert"
 app.update(pam_gets_married)
 # output: "Halpert"
 
@@ -131,6 +98,35 @@ app.update(regional_managers = [Person("Pam","Halpert")],
            employees=[])
 # Output: [Person("Pam","Halpert")]
 ```
+## Status
+
+Although this particular library is new, multiple versions of it are
+in production in private in a variety of industries ranging from healthcare
+to finance. See the [Motivation](#motivation) section below.
+
+In particular, although the design allows for atomic updates, those are not
+really implemented due to a lack of a pressing need. This means that if there
+are indeed errors during updates, it could leave things in an inconsistent
+state. But we don't write code with errors in it anyway. It's the outside world
+that is wrong.
+
+## Main Benefits
+
+* Centralized:
+    * Single source of truth for entire application state
+    * Easily implement
+      [undo/redo](examples/undo.py)/[persistence](examples/todo.py)
+* Flexible:
+    * Observe changes to any subset of the application state you are interested
+      in
+* Efficient
+    * Zero copying except for snapshot/restore functionality
+    * Only events for data that is actually changed are propagated
+* Predictable:
+    * Consistent state => predictable application
+    * Using Python's optional strong static typing (no, really) to catch as many
+      errors as possible.
+
 
 ## Motivation
 

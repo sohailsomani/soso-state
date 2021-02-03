@@ -95,7 +95,7 @@ class Model(typing.Generic[StateT]):
 
     async def wait_for(self, property: PropertyCallback[StateT, T]) -> T:
         result = await self.event(property)
-        return result  # type:ignore
+        return result
 
     def snapshot(self,
                  property: PropertyCallback[StateT, T] = lambda x: x) -> T:
@@ -117,10 +117,9 @@ class Model(typing.Generic[StateT]):
             node = self.__get_node_for_ops(ops)
             if isinstance(ops[-1], GetAttr):
                 ops[-1] = SetAttr(ops[-1].key, snapshot)
-            elif isinstance(ops[-1], GetItem):
-                ops[-1] = SetItem(ops[-1].key, snapshot)
             else:
-                assert False
+                assert isinstance(ops[-1], GetItem)
+                ops[-1] = SetItem(ops[-1].key, snapshot)
             obj: typing.Optional[typing.Any] = self.__current_state
             for op in ops:
                 obj, _ = op.execute(obj)

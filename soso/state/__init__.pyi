@@ -8,14 +8,13 @@ T = typing.TypeVar('T')
 T_contra = typing.TypeVar('T_contra', contravariant=True)
 T_co = typing.TypeVar('T_co', covariant=True)
 
-
 class PropertyCallback(typing.Generic[StateT_contra, T_co], typing.Protocol):
-    def __call__(self, __state: StateT_contra) -> T_co:
+    def __call__(self, __proxy: StateT_contra) -> T_co:
         ...
 
 
 class StateUpdateCallback(typing.Generic[StateT_contra], typing.Protocol):
-    def __call__(self, __state: StateT_contra) -> None:
+    def __call__(self, __proxy: StateT_contra) -> None:
         ...
 
 

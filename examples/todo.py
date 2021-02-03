@@ -10,6 +10,8 @@ from soso import state
 save/load methods on TodoAppModel """
 
 
+# Step 1: Define the application state using data classes nested as far as
+# needed
 @dataclass
 class Todo:
     description: str = ''
@@ -21,6 +23,7 @@ class TodoAppState:
     todos: typing.List[Todo] = field(default_factory=list)
 
 
+# Step 2: Create a model which holds and manipulates the state.
 class TodoAppModel(state.Model[TodoAppState]):
     def add_todo(self, text: str) -> None:
         assert text
@@ -39,6 +42,7 @@ class TodoAppModel(state.Model[TodoAppState]):
         self.restore(snapshot)
 
 
+# Step 3: Connect the model to the view
 class UI(tk.Frame):
     def __init__(self, model: TodoAppModel) -> None:
         self.__model = model
