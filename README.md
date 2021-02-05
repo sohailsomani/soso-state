@@ -9,7 +9,8 @@ ergonomics.
 * [Main Benefits](#main-benefits)
 * [Motivation](#motivation): Don't Repeat Yourself, Bugs Are Stupid
 * [Implementation](#implementation): Proxy -> writes -> events
-* [Profiling notes](#profiling-notes): Use PyPy 3.8 if perf critical, otherwise 14us overhead per update
+* [Profiling notes](#profiling-notes): ~100K updates/second with CPython, ~4
+  million updates/second with pypy3.8
 
 ## Quickstart
 
@@ -172,13 +173,17 @@ this record and emits the appropriate events.
 **Note:** See the output of [test_benchmark.py](tests/test_benchmark.py)
 [here](https://github.com/sohailsomani/soso-state/runs/1809770788#step:5:134).
 
-In a nutshell, for CPython update+event emit takes ~14 microseconds as compared
-to a manual update + event which takes about ~2 microseconds.
+In CPython, `soso.state` update+event emit has a median overhead of 11
+microseconds vs 1.5 microseconds.
 
-For pypy3.8, update+event emit takes 300 nanoseconds as compared to a manual
-update + event which takes 200 nanoseconds.
+For pypy3.8, the median update+event emit is ~260 nanoseconds vs 60 nanoseconds.
 
-So if performance is a major concern, then use pypy3.8.
+Therefore, if performance is a major concern, use pypy3.8.
+
+There have been minor structural optimizations implemented, but nothing for high
+performance Python. There is the possibility of a major (i.e., order of
+magnitude improvement) via a redesign of the implementation but it would take a
+long time to implement and there is no pressing need for it.
 
 ### Atomic updates
 
