@@ -173,7 +173,7 @@ this record and emits the appropriate events.
 **Note:** See the output of [test_benchmark.py](tests/test_benchmark.py)
 [here](https://github.com/sohailsomani/soso-state/runs/1809770788#step:5:134).
 
-In CPython, `soso.state` update+event emit has a median overhead of 11
+In CPython, `soso.state` update+event emit has a median overhead of ~10
 microseconds vs 1.5 microseconds.
 
 For pypy3.8, the median update+event emit is ~260 nanoseconds vs 60 nanoseconds.

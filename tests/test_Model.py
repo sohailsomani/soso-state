@@ -82,7 +82,8 @@ class TestModel(unittest.TestCase):
             # don't assign, but read
             x.value
 
-        self.assertRaises(Exception, lambda: model.update(update))
+        if __debug__:
+            self.assertRaises(AssertionError, lambda: model.update(update))
 
     def test_root_changes(self) -> None:
         model = Model()
