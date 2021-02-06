@@ -4,13 +4,30 @@
 pattern inspired by Redux, designed for execution efficiency and developer
 ergonomics.
 
+* [Main Benefits](#main-benefits): it gud
 * [Quickstart](#quickstart)
 * [Status](#status): In daily use
-* [Main Benefits](#main-benefits)
 * [Motivation](#motivation): Don't Repeat Yourself, Bugs Are Stupid
 * [Implementation](#implementation): Proxy -> writes -> events
 * [Profiling notes](#profiling-notes): ~100K updates/second with CPython, ~4
   million updates/second with pypy3.8
+
+## Main Benefits
+
+* Centralized:
+    * Single source of truth for entire application state
+    * Easily implement
+      [undo/redo](examples/undo.py)/[persistence](examples/todo.py)
+* Flexible:
+    * Observe changes to any subset of the application state you are interested
+      in
+* Efficient
+    * Zero copying except for snapshot/restore functionality
+    * Only events for data that is actually changed are propagated
+* Predictable:
+    * Consistent state => predictable application
+    * Using Python's optional strong static typing (no, really) to catch as many
+      errors as possible.
 
 ## Quickstart
 
@@ -111,22 +128,6 @@ are indeed errors during updates, it could leave things in an inconsistent
 state. But we don't write code with errors in it anyway. It's the outside world
 that is wrong.
 
-## Main Benefits
-
-* Centralized:
-    * Single source of truth for entire application state
-    * Easily implement
-      [undo/redo](examples/undo.py)/[persistence](examples/todo.py)
-* Flexible:
-    * Observe changes to any subset of the application state you are interested
-      in
-* Efficient
-    * Zero copying except for snapshot/restore functionality
-    * Only events for data that is actually changed are propagated
-* Predictable:
-    * Consistent state => predictable application
-    * Using Python's optional strong static typing (no, really) to catch as many
-      errors as possible.
 
 
 ## Motivation
