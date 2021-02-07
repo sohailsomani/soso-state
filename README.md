@@ -194,8 +194,10 @@ original state.
 
 As this is a performance issue, it is currently left incomplete.
 
-However, it could be done with a context manager. Note that this would not
-prevent events from propagating so its probably useless:
+However, it could be done with a context manager. Note that in the case of an
+error, there will be events sent for the entire tree as it is being restored.
+
+This is probably fine.
 
 ```python
 from contextlib import contextmanager
