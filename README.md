@@ -132,6 +132,12 @@ that is wrong.
 
 ## Motivation
 
+The idea was initially conceived after finding the Redux model was way too slow
+for real-time code (well, as real-time as you can get in a browser) and that the
+Redux way of solving the performance issue required way too much ceremony on the
+part of developers. That is, we could not find a way to factor out the thinking
+about performance in one place.
+
 See
 [here](https://github.com/reduxjs/reselect#motivation-for-memoized-selectors)
 for an excellent example of where the Redux approach has issues.
@@ -153,12 +159,6 @@ repository somewhere making lives easier for a select few. Indeed, a separate
 Python version also written by yours truly is also currently in some corporate
 repository somewhere and I am tired of rewriting the damn thing every few years.
 So I am rewriting it for the last time.
-
-The idea was initially conceived after finding the Redux model was way too slow
-for real-time code (well, as real-time as you can get in a browser) and that the
-Redux way of solving the performance issue required way too much ceremony on the
-part of developers. That is, we could not find a way to factor out the thinking
-about performance in one place.
 
 **NOTE:** I am not at all married to this syntax. I feel there could be more
 consistency in the syntax for events, state viewing and state updating.
