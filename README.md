@@ -21,7 +21,7 @@ ergonomics.
 * Flexible:
     * Observe changes to any subset of the application state you are interested
       in
-* Efficient
+* Efficient:
     * Zero copying except for snapshot/restore functionality
     * Only events for data that is actually changed are propagated
 * Predictable:
