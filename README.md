@@ -31,6 +31,12 @@ ergonomics.
 
 ## Quickstart
 
+`soso.state` is a simple library which gives you a single, global place to put
+all your application data. Updates are mediated through the `update` function
+and events are signalled for those values (and their ancestors) that are
+changed.
+
+
 ```sh
 $ python3 -m pip install git+https://github.com/sohailsomani/soso-state
 ```
