@@ -16,8 +16,8 @@ class EventCallback(typing.Generic[T_contra], typing.Protocol):
 class Event(typing.Generic[T]):
     def __init__(self, name: str, *arg_types: type, **kwarg_types: type):
         self._name = name
-        self._handlers: typing.List[typing.Tuple["EventToken",
-                                                 EventCallback[T]]] = []
+        self._handlers: typing.List[typing.Tuple[
+            "EventToken", EventCallback[T]]] = []
 
     def __call__(self, __value: T) -> None:
         for _, f in self._handlers:

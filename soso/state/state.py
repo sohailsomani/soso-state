@@ -5,12 +5,14 @@ import typing
 from collections import defaultdict
 from dataclasses import dataclass, field, is_dataclass
 
+from soso.state import protocols
 from soso.state.event import Event, EventCallback, EventToken
 
-__all__ = ['Model', 'StateT', 'T', 'PropertyCallback']
+__all__ = ['Model', 'SubModel', 'StateT', 'T', 'PropertyCallback']
 
 StateT_contra = typing.TypeVar('StateT_contra', contravariant=True)
 StateT = typing.TypeVar('StateT')
+RootStateT = typing.TypeVar('RootStateT')
 T = typing.TypeVar('T')
 T_contra = typing.TypeVar('T_contra', contravariant=True)
 T_co = typing.TypeVar('T_co', covariant=True)
@@ -50,7 +52,7 @@ class Node:
     op: typing.Optional[PropertyOp] = None
 
 
-class Model(typing.Generic[StateT]):
+class Model(typing.Generic[StateT], protocols.Model[StateT]):
     def __init__(self) -> None:
         model_klass = self.__orig_bases__[-1]  # type:ignore
         self.__state_klass = state_klass = typing.get_args(model_klass)[0]
@@ -96,6 +98,14 @@ class Model(typing.Generic[StateT]):
     async def wait_for(self, property: PropertyCallback[StateT, T]) -> T:
         result = await self.event(property)
         return result
+
+    @typing.overload
+    def snapshot(self) -> StateT:
+        ...
+
+    @typing.overload
+    def snapshot(self, property: PropertyCallback[StateT, T]) -> T:
+        ...
 
     def snapshot(self,
                  property: PropertyCallback[StateT, T] = lambda x: x) -> T:
@@ -213,6 +223,95 @@ class Model(typing.Generic[StateT]):
     # TODO: this should return a read-only view to avoid accidents
     def state(self) -> StateT:
         return self.__current_state
+
+
+class SubModel(typing.Generic[RootStateT, StateT], protocols.Model[StateT]):
+    def __init__(self, root_model: Model[RootStateT],
+                 root_property: typing.Callable[[RootStateT], StateT]):
+        self.__model = root_model
+        self.__property = root_property
+
+    def observe(self, property: PropertyCallback[StateT, T],
+                callback: EventCallback[T]) -> EventToken:
+        def propfunc(root: RootStateT) -> T:
+            return property(self.__property(root))
+
+        return self.__model.observe(propfunc, callback)
+
+    @property
+    def state(self) -> StateT:
+        return self.__property(self.__model.state)
+
+    async def wait_for(self, property: PropertyCallback[StateT, T]) -> T:
+        def propfunc(root: RootStateT) -> T:
+            return property(self.__property(root))
+
+        result = await self.__model.wait_for(propfunc)
+        return result
+
+    @typing.overload
+    def snapshot(self) -> StateT:
+        ...
+
+    @typing.overload
+    def snapshot(self, property: PropertyCallback[StateT, T]) -> T:
+        ...
+
+    def snapshot(
+        self,
+        property: typing.Optional[PropertyCallback[StateT, T]] = None
+    ) -> typing.Union[StateT, T]:
+        def propfunc(root: RootStateT) -> typing.Union[StateT, T]:
+            if property is None:
+                return self.__property(root)
+            else:
+                return property(self.__property(root))
+
+        return self.__model.snapshot(propfunc)
+
+    def restore(
+            self,
+            snapshot: typing.Union[StateT, T],
+            property: typing.Optional[PropertyCallback[StateT,
+                                                       T]] = None) -> None:
+        def propfunc(root: RootStateT) -> typing.Union[StateT, T]:
+            if property is None:
+                return self.__property(root)
+            else:
+                return property(self.__property(root))
+
+        return self.__model.restore(snapshot, propfunc)
+
+    @typing.overload
+    def update(self, **kwargs: typing.Any) -> None:
+        ...
+
+    @typing.overload
+    def update(self, property: StateUpdateCallback[StateT]) -> None:
+        ...
+
+    def update(self, *args: StateUpdateCallback[StateT],
+               **kwargs: typing.Any) -> None:
+        func: StateUpdateCallback[StateT]
+
+        if len(args) == 0:
+            assert len(kwargs) != 0
+
+            def doit(state: StateT) -> None:
+                for key, value in kwargs.items():
+                    setattr(state, key, value)
+
+            func = doit
+        else:
+            assert len(args) == 1
+            assert len(kwargs) == 0
+            assert callable(args[0])
+            func = args[0]
+
+        def updatecallback(root: RootStateT) -> None:
+            func(self.__property(root))
+
+        self.__model.update(updatecallback)
 
 
 @dataclass
