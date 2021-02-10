@@ -4,9 +4,11 @@ from soso.state.event import Event, EventCallback, EventToken
 
 StateT_contra = typing.TypeVar('StateT_contra', contravariant=True)
 StateT = typing.TypeVar('StateT')
+RootStateT = typing.TypeVar('RootStateT')
 T = typing.TypeVar('T')
 T_contra = typing.TypeVar('T_contra', contravariant=True)
 T_co = typing.TypeVar('T_co', covariant=True)
+
 
 class PropertyCallback(typing.Generic[StateT_contra, T_co], typing.Protocol):
     def __call__(self, __proxy: StateT_contra) -> T_co:
@@ -18,7 +20,7 @@ class StateUpdateCallback(typing.Generic[StateT_contra], typing.Protocol):
         ...
 
 
-class Model(typing.Generic[StateT]):
+class ModelProtocol(typing.Generic[StateT], typing.Protocol):
     def observe(self, property: PropertyCallback[StateT, T],
                 callback: EventCallback[T_contra]) -> EventToken:
         ...
@@ -35,10 +37,7 @@ class Model(typing.Generic[StateT]):
     def state(self) -> StateT:
         ...
 
-    async def wait_for(
-            self,
-            property: PropertyCallback[StateT,
-                                       T]) -> T:
+    async def wait_for(self, property: PropertyCallback[StateT, T]) -> T:
         ...
 
     @typing.overload
@@ -46,7 +45,7 @@ class Model(typing.Generic[StateT]):
         ...
 
     @typing.overload
-    def snapshot(self,property:PropertyCallback[StateT,T]) -> T:
+    def snapshot(self, property: PropertyCallback[StateT, T]) -> T:
         ...
 
     @typing.overload
@@ -54,5 +53,18 @@ class Model(typing.Generic[StateT]):
         ...
 
     @typing.overload
-    def restore(self, snapshot: T, property:PropertyCallback[StateT,T]) -> None:
+    def restore(self, snapshot: T, property: PropertyCallback[StateT,
+                                                              T]) -> None:
+        ...
+
+
+class Model(ModelProtocol[StateT]):
+    pass
+
+
+# A submodel shares the Model interface, but has a root model and delegates to
+# the root model for all its updates
+class SubModel(typing.Generic[RootStateT, StateT]):
+    def __init__(self, root_model: ModelProtocol[RootStateT],
+                 root_property: typing.Callable[[RootStateT], StateT]):
         ...
