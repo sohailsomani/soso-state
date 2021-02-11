@@ -35,6 +35,9 @@ generality.
 
 ## Quickstart
 
+[This image](README.png) may help get a better idea of the different components
+and how they work together.
+
 ```sh
 $ python3 -m pip install git+https://github.com/sohailsomani/soso-state
 ```
