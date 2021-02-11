@@ -159,6 +159,11 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
     def update(self, *args: StateUpdateCallback[StateT],
                **kwargs: typing.Any) -> None:
         func: StateUpdateCallback[StateT]
+        if '__submodel_root' in kwargs:
+            __submodel_root = kwargs['__submodel_root']
+            del kwargs['__submodel_root']
+        else:
+            __submodel_root = lambda x: x
 
         if len(args) == 0:
             assert len(kwargs) != 0
@@ -178,17 +183,18 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
         proxy = Proxy()
         func(proxy)  # type: ignore
         ops = _get_ops(proxy)
-        obj: typing.Optional[typing.Any] = self.__current_state
+        obj: typing.Optional[typing.Any] = __submodel_root(self.__current_state)
 
         # Apply changes tos tate
         stmts: typing.List[typing.List[PropertyOp]] = []
         curr_stmt: typing.List[PropertyOp] = []
         for op in ops:
             curr_stmt.append(op)
+            print('*****',obj,curr_stmt)
             obj, changed = op.execute(obj)
             # end of statement
             if obj is None:
-                obj = self.__current_state
+                obj = __submodel_root(self.__current_state)
                 if changed:
                     stmts.append(curr_stmt)
                     curr_stmt = []
@@ -204,13 +210,16 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
             return
 
         # Always emit root event
-        self.__root.event.emit(self.__current_state)
+        self.__root.event.emit(__submodel_root(self.__current_state))
+        rootproxy = Proxy()
+        __submodel_root(rootproxy)
+        rootops = _get_ops(rootproxy)
         for stmt in stmts:
             assert stmt
             # if foo.bar.baz[0] is modified then we need to signal foo,
             # foo.bar, foo.bar, foo.bar.baz[0], and then everything
             # below foo.bar.baz[0]
-            curr = []
+            curr = rootops[:]
             for op in stmt:
                 curr.append(op)
                 node = self.__get_node_for_ops(curr)
@@ -292,26 +301,10 @@ class SubModel(typing.Generic[RootStateT, StateT], protocols.Model[StateT]):
 
     def update(self, *args: StateUpdateCallback[StateT],
                **kwargs: typing.Any) -> None:
-        func: StateUpdateCallback[StateT]
-
-        if len(args) == 0:
-            assert len(kwargs) != 0
-
-            def doit(state: StateT) -> None:
-                for key, value in kwargs.items():
-                    setattr(state, key, value)
-
-            func = doit
-        else:
-            assert len(args) == 1
-            assert len(kwargs) == 0
-            assert callable(args[0])
-            func = args[0]
-
-        def updatecallback(root: RootStateT) -> None:
-            func(self.__property(root))
-
-        self.__model.update(updatecallback)
+        func: StateUpdateCallback[RootStateT]
+        self.__model.update(*args,
+                            __submodel_root=self.__property,
+                            **kwargs)
 
 
 @dataclass

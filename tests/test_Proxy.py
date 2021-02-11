@@ -59,3 +59,8 @@ class TestProxy(unittest.TestCase):
             GetAttr("nested"),
             GetAttr("value")
         ])
+
+    def test_empty(self) -> None:
+        proxy = Proxy()
+        path = _get_ops(proxy)
+        self.assertEqual(path,[])
