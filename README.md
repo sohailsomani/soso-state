@@ -1,7 +1,7 @@
 # soso.state
 
 `soso.state` is a simple, yet powerful Python library inspired by Redux which
-gives you a single place (`Model[State]`) to put all your application data.
+gives you a single place (`Model[State]`) to put all your running application state.
 Updates are mediated through the `Model.update` function and changes are
 observed through the `Model.observe` function. Via the use of `SubModel`s, you
 can write components that read from and write to any level of application state
