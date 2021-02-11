@@ -163,7 +163,11 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
             __submodel_root = kwargs['__submodel_root']
             del kwargs['__submodel_root']
         else:
-            __submodel_root = lambda x: x
+
+            def cb(x: StateT) -> StateT:
+                return x
+
+            __submodel_root = cb
 
         if len(args) == 0:
             assert len(kwargs) != 0
@@ -183,14 +187,15 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
         proxy = Proxy()
         func(proxy)  # type: ignore
         ops = _get_ops(proxy)
-        obj: typing.Optional[typing.Any] = __submodel_root(self.__current_state)
+        obj: typing.Optional[typing.Any] = __submodel_root(
+            self.__current_state)
 
         # Apply changes tos tate
         stmts: typing.List[typing.List[PropertyOp]] = []
         curr_stmt: typing.List[PropertyOp] = []
         for op in ops:
             curr_stmt.append(op)
-            print('*****',obj,curr_stmt)
+            print('*****', obj, curr_stmt)
             obj, changed = op.execute(obj)
             # end of statement
             if obj is None:
@@ -302,9 +307,7 @@ class SubModel(typing.Generic[RootStateT, StateT], protocols.Model[StateT]):
     def update(self, *args: StateUpdateCallback[StateT],
                **kwargs: typing.Any) -> None:
         func: StateUpdateCallback[RootStateT]
-        self.__model.update(*args,
-                            __submodel_root=self.__property,
-                            **kwargs)
+        self.__model.update(*args, __submodel_root=self.__property, **kwargs)
 
 
 @dataclass

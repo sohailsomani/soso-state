@@ -17,6 +17,7 @@ class UserList:
     users: typing.List[User] = field(default_factory=list)
     anumber: int = 0
 
+
 @dataclass
 class State:
     userlist: UserList = field(default_factory=UserList)
@@ -49,7 +50,7 @@ class TestSubModel(unittest.TestCase):
         root.update(
             userlist=UserList([User("willsmith", "willsmith@gmail.com")]))
         rootmock = MagicMock()
-        root.observe(lambda x: x.userlist,rootmock)
+        root.observe(lambda x: x.userlist, rootmock)
         submodel: state.protocols.Model[UserList] = SubModel(
             root, lambda x: x.userlist)
 
@@ -59,10 +60,9 @@ class TestSubModel(unittest.TestCase):
             UserList([User("willsmith", "willsmith@gmail.com")]))
 
         # check that updating submodel updates the root model
-        def update(proxy:UserList):
-            proxy.users = [
-                User("jazzyjeff","jazzyjeff@gmail.com")
-            ]
+        def update(proxy: UserList) -> None:
+            proxy.users = [User("jazzyjeff", "jazzyjeff@gmail.com")]
+
         print("HERE")
         submock.reset()
         rootmock.reset()
@@ -70,32 +70,26 @@ class TestSubModel(unittest.TestCase):
         submodel.update(update)
 
         submock.assert_called_with(
-            UserList([User("jazzyjeff","jazzyjeff@gmail.com")])
-        )
+            UserList([User("jazzyjeff", "jazzyjeff@gmail.com")]))
 
         rootmock.assert_called_with(
-            UserList([User("jazzyjeff","jazzyjeff@gmail.com")])
-        )
+            UserList([User("jazzyjeff", "jazzyjeff@gmail.com")]))
 
     def test_probably_bug(self) -> None:
         root = RootModel()
-        sub: state.protocols.Model[UserList] = SubModel(root,
-                                                        lambda x: x.userlist)
+        sub: state.protocols.Model[UserList] = SubModel(
+            root, lambda x: x.userlist)
         mock1 = MagicMock()
         mock2 = MagicMock()
-        sub.observe(lambda x: x.users,mock1)
-        sub.observe(lambda x: x.anumber,mock2)
+        sub.observe(lambda x: x.users, mock1)
+        sub.observe(lambda x: x.anumber, mock2)
 
         # hunch: updating multiple values through a submodel update function is
         # buggy
-        def update(proxy:UserList):
-            proxy.users = [
-                User("willsmith","willsmith@gmail.com")
-            ]
+        def update(proxy: UserList) -> None:
+            proxy.users = [User("willsmith", "willsmith@gmail.com")]
             proxy.anumber = 5
 
         sub.update(update)
-        mock1.assert_called_with([
-            User("willsmith","willsmith@gmail.com")
-        ])
+        mock1.assert_called_with([User("willsmith", "willsmith@gmail.com")])
         mock2.assert_called_with(5)
