@@ -1,13 +1,14 @@
 # soso.state
 
 `soso.state` is a simple, yet powerful library inspired by Redux which gives you
-a single, global place to put all your application data. Updates are mediated
-through the `update` function and events are signalled for those values (and
-their ancestors) that are changed. Through the use of submodels, you can write
-components that read from and write to any level of application state without 
-loss of generality. [This image](README.png) may help get a better idea of the
-different components and how they work together.
+a single, global place (`Model[State]`) to put all your application data.
+Updates are mediated through the `Model.update` function and changes are
+observed through the `Model.observe` function. Via the use of `SubModel`s, you
+can write components that read from and write to any level of application state
+without loss of generality.
 
+[This image](README.png) may help get a better idea of the different components
+and how they work together.
 
 
 * [Main Benefits](#main-benefits): it gud
