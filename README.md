@@ -1,8 +1,12 @@
 # soso.state
 
-`soso.state` is a Python 3.8+ implementation of a predictable state management
-pattern inspired by Redux, designed for execution efficiency and developer
-ergonomics.
+`soso.state` is a simple, yet powerful library inspired by Redux which gives you
+a single, global place to put all your application data. Updates are mediated
+through the `update` function and events are signalled for those values (and
+their ancestors) that are changed. Through the use of submodels, you can write
+components that write to any level of application state without loss of
+generality.
+
 
 * [Main Benefits](#main-benefits): it gud
 * [Quickstart](#quickstart)
@@ -30,12 +34,6 @@ ergonomics.
       errors as possible.
 
 ## Quickstart
-
-`soso.state` is a simple library which gives you a single, global place to put
-all your application data. Updates are mediated through the `update` function
-and events are signalled for those values (and their ancestors) that are
-changed.
-
 
 ```sh
 $ python3 -m pip install git+https://github.com/sohailsomani/soso-state
