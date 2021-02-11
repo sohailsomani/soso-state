@@ -31,7 +31,9 @@ class TodoAppState:
 
 
 def make_undoable(
-    model: state.Model[state.StateT],
+    # Note that here we use the protocol as the contract so this can work with
+    # anything that implements the interface, in particular, submodels
+    model: state.protocols.Model[state.StateT],
     prop: state.PropertyCallback[state.StateT, state.T]
 ) -> typing.Callable[[], None]:
     # The idea here is to catch every state update, memorize that as the
