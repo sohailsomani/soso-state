@@ -4,8 +4,8 @@
 a single, global place to put all your application data. Updates are mediated
 through the `update` function and events are signalled for those values (and
 their ancestors) that are changed. Through the use of submodels, you can write
-components that write to any level of application state without loss of
-generality.
+components that read from and write to any level of application state without 
+loss of generality.
 
 
 * [Main Benefits](#main-benefits): it gud
