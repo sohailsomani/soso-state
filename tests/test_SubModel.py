@@ -63,7 +63,6 @@ class TestSubModel(unittest.TestCase):
         def update(proxy: UserList) -> None:
             proxy.users = [User("jazzyjeff", "jazzyjeff@gmail.com")]
 
-        print("HERE")
         submock.reset()
         rootmock.reset()
 
@@ -74,6 +73,20 @@ class TestSubModel(unittest.TestCase):
 
         rootmock.assert_called_with(
             UserList([User("jazzyjeff", "jazzyjeff@gmail.com")]))
+
+        submock.reset()
+        rootmock.reset()
+
+        # check that updating root model updates the submodel
+        def update2(proxy: State) -> None:
+            proxy.userlist.users = [User("unclephil", "unclephil@gmail.com")]
+
+        root.update(update2)
+        submock.assert_called_with(
+            UserList([User("unclephil", "unclephil@gmail.com")]))
+
+        rootmock.assert_called_with(
+            UserList([User("unclephil", "unclephil@gmail.com")]))
 
     def test_probably_bug(self) -> None:
         root = RootModel()
