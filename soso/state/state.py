@@ -226,7 +226,7 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
 
 
 class SubModel(typing.Generic[RootStateT, StateT], protocols.Model[StateT]):
-    def __init__(self, root_model: Model[RootStateT],
+    def __init__(self, root_model: protocols.Model[RootStateT],
                  root_property: typing.Callable[[RootStateT], StateT]):
         self.__model = root_model
         self.__property = root_property

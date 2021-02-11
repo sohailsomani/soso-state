@@ -15,6 +15,11 @@ class Todo:
     done: bool = False
 
 
+@dataclass
+class TodoAppState:
+    todos: typing.List[Todo] = field(default_factory=list)
+
+
 T = typing.TypeVar('T')
 
 
@@ -23,11 +28,6 @@ class UndoState(typing.Generic[T]):
     current: T
     past: typing.List[T] = field(default_factory=list)
     is_active: bool = False
-
-
-@dataclass
-class TodoAppState:
-    todos: typing.List[Todo] = field(default_factory=list)
 
 
 def make_undoable(
@@ -48,20 +48,21 @@ def make_undoable(
     # Future improvements could be to attach the UndoState automatically onto
     # the state tree as technically this is part of application state.
 
-    undo = UndoState(current=model.snapshot(prop))
+    submodel = state.SubModel(model, prop)
+    undo = UndoState(current=submodel.snapshot())
 
     def on_state_update(__ignored: state.T) -> None:
         if undo.is_active:
             return
         undo.past.append(undo.current)
-        undo.current = model.snapshot(prop)
+        undo.current = submodel.snapshot()
 
     def on_do_undo() -> None:
         if len(undo.past) == 0:
             return
         try:
             undo.is_active = True
-            model.restore(undo.past.pop(), prop)
+            submodel.restore(undo.past.pop())
         finally:
             undo.is_active = False
 
