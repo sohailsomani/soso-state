@@ -40,6 +40,5 @@ class TestSubModel(unittest.TestCase):
 
         mock = MagicMock()
         submodel.observe(lambda x: x, mock)
-        mock.assert_called_with(UserList([
-            User("willsmith","willsmith@gmail.com")
-        ]))
+        mock.assert_called_with(
+            UserList([User("willsmith", "willsmith@gmail.com")]))
