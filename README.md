@@ -5,7 +5,9 @@ a single, global place to put all your application data. Updates are mediated
 through the `update` function and events are signalled for those values (and
 their ancestors) that are changed. Through the use of submodels, you can write
 components that read from and write to any level of application state without 
-loss of generality.
+loss of generality. [This image](README.png) may help get a better idea of the
+different components and how they work together.
+
 
 
 * [Main Benefits](#main-benefits): it gud
@@ -34,9 +36,6 @@ loss of generality.
       errors as possible.
 
 ## Quickstart
-
-[This image](README.png) may help get a better idea of the different components
-and how they work together.
 
 ```sh
 $ python3 -m pip install git+https://github.com/sohailsomani/soso-state
