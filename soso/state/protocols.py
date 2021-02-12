@@ -32,7 +32,7 @@ class Model(typing.Generic[StateT], typing.Protocol):
         ...
 
     @typing.overload
-    def update(self, property: StateUpdateCallback[StateT]) -> None:
+    def update(self, func: StateUpdateCallback[StateT]) -> None:
         ...
 
     @property
