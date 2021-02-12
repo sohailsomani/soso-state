@@ -8,6 +8,21 @@ from dataclasses import dataclass, field, is_dataclass
 from soso.state import protocols
 from soso.state.event import Event, EventCallback, EventToken
 
+try:
+    import pandas as pd
+
+    def _is_not_equal(x: typing.Any, y: typing.Any) -> bool:
+        if isinstance(x, (pd.DataFrame, pd.Series)) or \
+           isinstance(y, (pd.DataFrame, pd.Series)):
+            return id(x) != id(y)
+        else:
+            return x != y  # type: ignore
+except ImportError:
+
+    def _is_not_equal(x: typing.Any, y: typing.Any) -> bool:
+        return x != y  # type: ignore
+
+
 __all__ = ['Model', 'SubModel', 'StateT', 'T', 'PropertyCallback']
 
 StateT_contra = typing.TypeVar('StateT_contra', contravariant=True)
@@ -331,7 +346,7 @@ class SetAttr:
             self, obj: typing.Any
     ) -> typing.Tuple[typing.Optional[typing.Any], bool]:
         curr_value = getattr(obj, self.key)
-        changed = curr_value != self.value
+        changed = _is_not_equal(curr_value, self.value)
         if changed:
             setattr(obj, self.key, self.value)
         return None, changed

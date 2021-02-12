@@ -28,7 +28,7 @@ and how they work together.
       [undo/redo](examples/undo.py)/[persistence](examples/todo.py)
 * Flexible:
     * Observe changes to any subset of the application state you are interested
-      in
+      in ([ui.py](examples/notebooks/ui.py))
 * Efficient:
     * Zero copying except for snapshot/restore functionality
     * Only events for data that is actually changed are propagated
@@ -192,9 +192,11 @@ the proxy being passed in as a write-only proxy. So what you should do in this
 case is:
 
 ```python
+
 def update(proxy:MyState):
   proxy.mylist = model.state.mylist + [5]
 model.update(update)
+
 ```
 
 That is, treat the data structures as immutable and assign a new value to the

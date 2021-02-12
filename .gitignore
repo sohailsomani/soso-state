@@ -7,3 +7,5 @@ __pycache__
 prof
 .coverage
 .envrc
+venv
+.ipynb_checkpoints
