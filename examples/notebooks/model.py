@@ -26,12 +26,14 @@ class State:
 class Model(state.Model[State]):
     def __init__(self) -> None:
         super().__init__()
-        _init_gbm_generator(state.SubModel(self,lambda x: x.chart.selected_ticker),
-                            state.SubModel(self,lambda x: x.chart.bars))
+        _init_gbm_generator(
+            state.SubModel(self, lambda x: x.chart.selected_ticker),
+            state.SubModel(self, lambda x: x.chart.bars))
 
 
-def _init_gbm_generator(ticker_model:state.protocols.Model[str],
-                        bars_model:state.protocols.Model[pd.DataFrame]) -> None:
+def _init_gbm_generator(
+        ticker_model: state.protocols.Model[str],
+        bars_model: state.protocols.Model[pd.DataFrame]) -> None:
     from math import exp, sqrt
     from random import gauss
 
@@ -77,5 +79,4 @@ def _init_gbm_generator(ticker_model:state.protocols.Model[str],
 
         bars_model.restore(df)
 
-    ticker_model.observe(lambda x: x,
-                         lambda ticker: generate_data(ticker))
+    ticker_model.observe(lambda x: x, lambda ticker: generate_data(ticker))
