@@ -195,7 +195,6 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
         curr_stmt: typing.List[PropertyOp] = []
         for op in ops:
             curr_stmt.append(op)
-            print('*****', obj, curr_stmt)
             obj, changed = op.execute(obj)
             # end of statement
             if obj is None:
