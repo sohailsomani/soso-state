@@ -8,7 +8,7 @@ of how to use `soso.state` in a Real App (TM).
    
 The easiest way to play around with the examples is to use a virtualenv:
 
-```console
+```bash
 git clone https://github.com/sohailsomani/soso-state
 cd soso-state
 tox --devenv venv -e py38
