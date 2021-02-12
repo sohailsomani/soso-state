@@ -94,7 +94,6 @@ token.disconnect()
 
 # create a submodel to track Pam Beesly
 pam = state.SubModel(app,lambda x: x.employees[1])
-pams_last_name.reset_mock()
 pam.update(last_name = "Halpert")
 # output: "Halpert"
 
