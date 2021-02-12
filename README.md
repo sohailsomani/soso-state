@@ -92,12 +92,10 @@ app.update(regional_managers = [Person("Dwight","Schrute")],
 # No longer interested in regional_manager updates
 token.disconnect()
 
-# For more complex state updates, use a function. Note that
-# this is NOT the actual state object, it is a write-only proxy.
-# Do not try to read from the argument that is passed in
-def pam_gets_married(proxy:AppState):
-   proxy.employees[1].last_name = "Halpert"
-app.update(pam_gets_married)
+# create a submodel to track Pam Beesly
+pam = state.SubModel(app,lambda x: x.employees[1])
+pams_last_name.reset_mock()
+pam.update(last_name = "Halpert")
 # output: "Halpert"
 
 app.update(regional_managers = [Person("Jim","Halpert")])

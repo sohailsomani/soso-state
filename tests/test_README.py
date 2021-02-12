@@ -58,14 +58,10 @@ class TestREADME(unittest.TestCase):
         app.observe(lambda x: x.employees[1].last_name, pams_last_name)
         pams_last_name.assert_called_with("Beesly")
 
-        # For more complex property changes, use a function. Note that the
-        # "state" passed in is a proxy object that only records what values you
-        # set so do not attempt to read from it.
-        def pam_gets_married(state: AppState) -> None:
-            state.employees[1].last_name = "Halpert"
-
+        # create a submodel to track Pam Beesly
+        pam:state.protocols.Model[Person] = state.SubModel(app,lambda x: x.employees[1])
         pams_last_name.reset_mock()
-        app.update(pam_gets_married)
+        pam.update(last_name = "Halpert")
 
         self.assertEqual(app.state.employees[1].last_name, "Halpert")
         # Note that the callback was called with exactly the attribute that was
