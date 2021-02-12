@@ -14,7 +14,7 @@ and how they work together.
 * [Main Benefits](#main-benefits): it gud
 * [Quickstart](#quickstart)
 * [Status](#status): In daily use
-* [Motivation](#motivation): Don't Repeat Yourself, Bugs Are Stupid
+* [Motivation](#motivation): Don't Repeat Yourself, Keep It Simple
 * [Implementation](#implementation): Proxy -> writes -> events
 * [Gotchas](#gotchas): Sadly, there is one
 * [Profiling notes](#profiling-notes): ~100K updates/second with CPython, ~4
