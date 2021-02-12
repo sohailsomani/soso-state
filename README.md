@@ -16,6 +16,7 @@ and how they work together.
 * [Status](#status): In daily use
 * [Motivation](#motivation): Don't Repeat Yourself, Bugs Are Stupid
 * [Implementation](#implementation): Proxy -> writes -> events
+* [Gotchas](#gotchas): Sadly, there is one
 * [Profiling notes](#profiling-notes): ~100K updates/second with CPython, ~4
   million updates/second with pypy3.8
 
@@ -175,6 +176,40 @@ consistency in the syntax for events, state viewing and state updating.
 Boring and straightforward. Your state update function gets a proxy. The proxy
 records what you set. The `update` function then updates the actual state using
 this record and emits the appropriate events.
+
+## Gotchas
+
+The main gotcha is when you use a function to `update` the state. It's easy to
+forget that the instance being passed in is a proxy and has no behavior.
+
+So people end up doing stuff like:
+
+```python
+def update(proxy:MyState):
+  proxy.mylist.append(5)
+model.update(update)
+```
+
+An easy mistake to make (I make it myself occasionally). It's best to think of
+the proxy being passed in as a write-only proxy. So what you should do in this
+case is:
+
+```python
+def update(proxy:MyState):
+  proxy.mylist = model.state.mylist + [5]
+model.update(update)
+```
+
+That is, treat the data structures as immutable and assign a new value to the
+variable. You may prefer to use a library such as
+[pyrsistent](https://github.com/tobgu/pyrsistent) to encode this concept.
+
+It's for this reason, the function interface should be used sparingly and the
+keyword interface preferred. The same example can be written as:
+
+```python
+model.update(mylist = model.state.mylist + [5])
+```
 
 ## Profiling notes
 
