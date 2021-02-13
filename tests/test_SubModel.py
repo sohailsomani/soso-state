@@ -34,6 +34,8 @@ class TestSubModel(unittest.TestCase):
         root.update(
             userlist=UserList([User("willsmith", "willsmith@gmail.com")]))
         submodel = root.submodel(lambda x: x.userlist)
+        test_type: state.protocols.Model[UserList] = submodel
+        assert test_type is not None
 
         submock = MagicMock()
         submodel.observe(lambda x: x, submock)

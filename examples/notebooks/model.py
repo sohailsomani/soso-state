@@ -10,7 +10,7 @@ from soso import state
 @dataclass
 class Chart:
     bars: pd.DataFrame = field(
-        default_factory=lambda: pd.DataFrame(  # type: ignore
+        default_factory=lambda: pd.DataFrame(
             index=[],
             data=dict(open=[], high=[], low=[], close=[])))
     selected_ticker: str = ''
@@ -54,7 +54,7 @@ def _init_gbm_generator(
         # ticker ignored
         nonlocal st
 
-        st = np.random.randint(50, 150)
+        st = float(np.random.randint(50, 150))
         bars = []
         date = dt.datetime(2020, 1, 1, 9, 30)
         for hour in range(24):

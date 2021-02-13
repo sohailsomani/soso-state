@@ -7,3 +7,4 @@ gprof2dot
 epc
 jedi
 importmagic
+data-science-types

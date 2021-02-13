@@ -15,7 +15,11 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/sohailsomani/soso-state",
-    packages=['soso.state'],
+    packages=['soso','soso.state'],
+    package_data={
+        'soso':['*.pyi','py.typed'],
+        'soso.state':['*.pyi','py.typed']
+    },
     classifiers=[
         "Programming Language :: Python :: 3.8",
         "License :: OSI Approved :: MIT License",

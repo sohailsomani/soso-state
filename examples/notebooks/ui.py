@@ -26,8 +26,9 @@ class Chart(go.FigureWidget):  # type: ignore
             data.close = bars.close
 
 
-def bind_dropdown(options: state.protocols.Model[typing.List[state.T]],
-                  target: state.protocols.Model[state.T]) -> Dropdown:
+def bind_dropdown(  # type: ignore
+        options: state.protocols.Model[typing.List[state.T]],
+        target: state.protocols.Model[state.T]) -> Dropdown:
     dropdown = Dropdown()
 
     def update_options(options: typing.List[state.T]) -> None:
@@ -45,9 +46,7 @@ def bind_dropdown(options: state.protocols.Model[typing.List[state.T]],
 class UI(VBox):  # type: ignore
     def __init__(self, m: state.protocols.Model[model.State]) -> None:
         super().__init__(children=[
-            bind_dropdown(
-                m.submodel(lambda x: x.tickers),
-                m.submodel(lambda x: x.chart.selected_ticker)
-            ),
+            bind_dropdown(m.submodel(lambda x: x.tickers),
+                          m.submodel(lambda x: x.chart.selected_ticker)),
             Chart(m.submodel(lambda x: x.chart))
         ])
