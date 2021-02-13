@@ -59,8 +59,7 @@ class TestREADME(unittest.TestCase):
         pams_last_name.assert_called_with("Beesly")
 
         # create a submodel to track Pam Beesly
-        pam: state.protocols.Model[Person] = app.submodel(
-            lambda x: x.employees[1])
+        pam = app.submodel(lambda x: x.employees[1])
         pams_last_name.reset_mock()
         pam.update(last_name="Halpert")
 

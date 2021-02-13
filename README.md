@@ -81,9 +81,6 @@ app.update(
 token = app.observe(lambda state: state.regional_managers[0],print)
 # Output: Person("Michael","Scott")
 
-# Observe changes to Pam's last name updates
-app.observe(lambda state: state.employees[1].last_name,print)
-
 # Update regional_managers and assistant_to_the_regional_managers atomically
 app.update(regional_managers = [Person("Dwight","Schrute")],
            assistant_to_the_regional_managers = [])
@@ -92,8 +89,12 @@ app.update(regional_managers = [Person("Dwight","Schrute")],
 # No longer interested in regional_manager updates
 token.disconnect()
 
+# Observe changes to Pam's last name
+app.observe(lambda state: state.employees[1].last_name,print)
+# output: Beesley
+
 # create a submodel to track Pam Beesly
-pam = state.SubModel(app,lambda x: x.employees[1])
+pam = app.submodel(lambda x: x.employees[1])
 pam.update(last_name = "Halpert")
 # output: "Halpert"
 
