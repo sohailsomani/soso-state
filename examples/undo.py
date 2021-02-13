@@ -48,7 +48,7 @@ def make_undoable(
     # Future improvements could be to attach the UndoState automatically onto
     # the state tree as technically this is part of application state.
 
-    submodel = state.SubModel(model, prop)
+    submodel = model.submodel(prop)
     undo = UndoState(current=submodel.snapshot())
 
     def on_state_update(__ignored: state.T) -> None:

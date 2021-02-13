@@ -16,7 +16,7 @@ and how they work together.
 * [Status](#status): In daily use
 * [Motivation](#motivation): Don't Repeat Yourself, Keep It Simple
 * [Implementation](#implementation): Proxy -> writes -> events
-* [Gotchas](#gotchas): Sadly, there is one
+* [Gotchas](#gotchas): Sadly, there is ~one~two
 * [Profiling notes](#profiling-notes): ~100K updates/second with CPython, ~4
   million updates/second with pypy3.8
 
@@ -176,6 +176,8 @@ this record and emits the appropriate events.
 
 ## Gotchas
 
+### Update function
+
 The main gotcha is when you use a function to `update` the state. It's easy to
 forget that the instance being passed in is a proxy and has no behavior.
 
@@ -209,6 +211,19 @@ keyword interface preferred. The same example can be written as:
 ```python
 model.update(mylist = model.state.mylist + [5])
 ```
+
+
+### Type checking
+
+Python type checking through mypy is still in its early phases even though it is
+quite robust and accurate. There are occasionally issues with imports especially
+since `soso.state` lives in a namespace only package (why, I don't know, why not
+I guess).
+
+All this means is that your `mypy.ini` file should look a lot like this
+project's [mypy.ini](mypy.ini). The reason being that you really want to know if
+mypy is unable to locate imports which will impact typing and will potentially
+lead to you thinking your code is type safe when it is not.
 
 ## Profiling notes
 

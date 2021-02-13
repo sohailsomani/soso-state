@@ -23,7 +23,7 @@ except ImportError:
         return x != y  # type: ignore
 
 
-__all__ = ['Model', 'SubModel', 'StateT', 'T', 'PropertyCallback']
+__all__ = ['Model', 'StateT', 'T', 'PropertyCallback']
 
 StateT_contra = typing.TypeVar('StateT_contra', contravariant=True)
 StateT = typing.TypeVar('StateT')
@@ -32,15 +32,8 @@ T = typing.TypeVar('T')
 T_contra = typing.TypeVar('T_contra', contravariant=True)
 T_co = typing.TypeVar('T_co', covariant=True)
 
-
-class PropertyCallback(typing.Generic[StateT_contra, T_co], typing.Protocol):
-    def __call__(self, __state: StateT_contra) -> T_co:
-        ...
-
-
-class StateUpdateCallback(typing.Generic[StateT_contra], typing.Protocol):
-    def __call__(self, __state: StateT_contra) -> None:
-        ...
+PropertyCallback = typing.Callable[[StateT_contra], T_co]
+StateUpdateCallback = typing.Callable[[StateT_contra], None]
 
 
 class PropertyOp(typing.Protocol):
@@ -88,6 +81,10 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
             root = op.get_value(root)
         return root
 
+    def submodel(self, func: PropertyCallback[StateT,
+                                              T]) -> protocols.Model[T]:
+        return _SubModel(self, func)
+
     def observe(self, func: PropertyCallback[StateT, T],
                 callback: EventCallback[T]) -> EventToken:
         event, ops = self.__event(func)
@@ -122,8 +119,17 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
     def snapshot(self, property: PropertyCallback[StateT, T]) -> T:
         ...
 
-    def snapshot(self,
-                 property: PropertyCallback[StateT, T] = lambda x: x) -> T:
+    def snapshot(
+            self,
+            property: typing.Optional[PropertyCallback[StateT,
+                                                       T]] = None) -> T:
+        if property is None:
+
+            def cb(x: StateT) -> StateT:
+                return x
+
+            property = cb  # type: ignore
+        assert property is not None
         subtree = property(self.state)
         return copy.deepcopy(subtree)
 
@@ -253,7 +259,7 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
         return self.__current_state
 
 
-class SubModel(typing.Generic[RootStateT, StateT], protocols.Model[StateT]):
+class _SubModel(typing.Generic[RootStateT, StateT], protocols.Model[StateT]):
     def __init__(self, root_model: protocols.Model[RootStateT],
                  root_property: typing.Callable[[RootStateT], StateT]):
         self.__model = root_model
@@ -320,8 +326,14 @@ class SubModel(typing.Generic[RootStateT, StateT], protocols.Model[StateT]):
 
     def update(self, *args: StateUpdateCallback[StateT],
                **kwargs: typing.Any) -> None:
-        func: StateUpdateCallback[RootStateT]
         self.__model.update(*args, __submodel_root=self.__property, **kwargs)
+
+    def submodel(self, property: PropertyCallback[StateT,
+                                                  T]) -> protocols.Model[T]:
+        def func(x: RootStateT) -> T:
+            return property(self.__property(x))
+
+        return self.__model.submodel(func)
 
 
 @dataclass

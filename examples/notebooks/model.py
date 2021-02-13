@@ -27,8 +27,9 @@ class Model(state.Model[State]):
     def __init__(self) -> None:
         super().__init__()
         _init_gbm_generator(
-            state.SubModel(self, lambda x: x.chart.selected_ticker),
-            state.SubModel(self, lambda x: x.chart.bars))
+            self.submodel(lambda x: x.chart.selected_ticker),
+            self.submodel(lambda x: x.chart.bars)
+        )
 
 
 def _init_gbm_generator(

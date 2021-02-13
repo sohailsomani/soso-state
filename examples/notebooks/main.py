@@ -1,9 +1,8 @@
 import typing
 
+from examples.notebooks.model import Model
+from examples.notebooks.ui import UI
 from IPython.core import display
-
-from .model import Model
-from .ui import UI
 
 
 def run() -> typing.Tuple[Model, UI]:

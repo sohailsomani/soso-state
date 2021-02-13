@@ -11,19 +11,12 @@ T_co = typing.TypeVar('T_co', covariant=True)
 
 __all__ = []  # type: ignore
 
-
-class PropertyCallback(typing.Generic[StateT_contra, T_co], typing.Protocol):
-    def __call__(self, __proxy: StateT_contra) -> T_co:
-        ...
-
-
-class StateUpdateCallback(typing.Generic[StateT_contra], typing.Protocol):
-    def __call__(self, __proxy: StateT_contra) -> None:
-        ...
+PropertyCallback = typing.Callable[[StateT_contra], T_co]
+StateUpdateCallback = typing.Callable[[StateT_contra], None]
 
 
 class Model(typing.Generic[StateT], typing.Protocol):
-    def observe(self, property: PropertyCallback[StateT, T],
+    def observe(self, property: typing.Callable[[StateT], T],
                 callback: EventCallback[T]) -> EventToken:
         ...
 
@@ -39,7 +32,7 @@ class Model(typing.Generic[StateT], typing.Protocol):
     def state(self) -> StateT:
         ...
 
-    async def wait_for(self, property: PropertyCallback[StateT, T]) -> T:
+    async def wait_for(self, property: typing.Callable[[StateT], T]) -> T:
         ...
 
     @typing.overload
@@ -47,7 +40,7 @@ class Model(typing.Generic[StateT], typing.Protocol):
         ...
 
     @typing.overload
-    def snapshot(self, property: PropertyCallback[StateT, T]) -> T:
+    def snapshot(self, property: typing.Callable[[StateT], T]) -> T:
         ...
 
     @typing.overload
@@ -55,6 +48,9 @@ class Model(typing.Generic[StateT], typing.Protocol):
         ...
 
     @typing.overload
-    def restore(self, snapshot: T, property: PropertyCallback[StateT,
-                                                              T]) -> None:
+    def restore(self, snapshot: T, property: typing.Callable[[StateT],
+                                                             T]) -> None:
+        ...
+
+    def submodel(self, property: typing.Callable[[StateT], T]) -> "Model[T]":
         ...

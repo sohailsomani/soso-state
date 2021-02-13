@@ -2,10 +2,9 @@ import typing
 
 import pandas as pd
 import plotly.graph_objects as go
+from examples.notebooks import model
 from ipywidgets.widgets import Dropdown, VBox
 from soso import state
-
-import model
 
 
 class Chart(go.FigureWidget):  # type: ignore
@@ -46,15 +45,9 @@ def bind_dropdown(options: state.protocols.Model[typing.List[state.T]],
 class UI(VBox):  # type: ignore
     def __init__(self, m: state.protocols.Model[model.State]) -> None:
         super().__init__(children=[
-            # Note, we need to ignore the type because lambda functions are not
-            # very amenable to type checking and mypy complains. In future
-            # iterations, the idea is to use something like:
-            #
-            #    state.SubModel(m.state.tickers)
-            #
-            # To ensure consistent typing
             bind_dropdown(
-                state.SubModel(m, lambda x: x.tickers),  # type: ignore
-                state.SubModel(m, lambda x: x.chart.selected_ticker)),
-            Chart(state.SubModel(m, lambda x: x.chart))
+                m.submodel(lambda x: x.tickers),
+                m.submodel(lambda x: x.chart.selected_ticker)
+            ),
+            Chart(m.submodel(lambda x: x.chart))
         ])
