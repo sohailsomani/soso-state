@@ -34,7 +34,7 @@ and how they work together.
     * Only events for data that is actually changed are propagated
 * Predictable:
     * Consistent state => predictable application
-    * Using Python's optional strong static typing (no, really) to catch as many
+    * Using Python's optional strong static typing ([no, really](typecheck.png)) to catch as many
       errors as possible.
 
 ## Quickstart
