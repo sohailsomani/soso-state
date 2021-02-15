@@ -16,6 +16,7 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/sohailsomani/soso-state",
     packages=['soso','soso.state'],
+    namespace_packages=['soso'],
     package_data={
         'soso':['*.pyi','py.typed'],
         'soso.state':['*.pyi','py.typed']
