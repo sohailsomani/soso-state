@@ -261,6 +261,12 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
     def state(self) -> StateT:
         return self.__current_state
 
+    def __str__(self) -> str:
+        return f"#<Model state={self.state}>"
+
+    def __repr__(self) -> str:
+        return str(self)
+
 
 class _SubModel(typing.Generic[RootStateT, StateT], protocols.Model[StateT]):
     def __init__(self, root_model: protocols.Model[RootStateT],
@@ -340,6 +346,12 @@ class _SubModel(typing.Generic[RootStateT, StateT], protocols.Model[StateT]):
             return property(self.__property(x))
 
         return self.__model.submodel(func)
+
+    def __str__(self) -> str:
+        return f"#<SubModel state={self.state} root={self.__model}>"
+
+    def __repr__(self) -> str:
+        return str(self)
 
 
 @dataclass
