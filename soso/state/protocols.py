@@ -16,6 +16,9 @@ StateUpdateCallback = typing.Callable[[StateT_contra], None]
 
 
 class Model(typing.Generic[StateT], typing.Protocol):
+    def observe_root(self, callback: EventCallback[StateT]) -> EventToken:
+        ...
+
     def observe(self, property: typing.Callable[[StateT], T],
                 callback: EventCallback[T]) -> EventToken:
         ...

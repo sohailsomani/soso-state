@@ -85,6 +85,9 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
                                               T]) -> protocols.Model[T]:
         return _SubModel(self, func)
 
+    def observe_root(self, callback: EventCallback[StateT]) -> EventToken:
+        return self.observe(lambda x: x, callback)
+
     def observe(self, func: PropertyCallback[StateT, T],
                 callback: EventCallback[T]) -> EventToken:
         event, ops = self.__event(func)
@@ -264,6 +267,9 @@ class _SubModel(typing.Generic[RootStateT, StateT], protocols.Model[StateT]):
                  root_property: typing.Callable[[RootStateT], StateT]):
         self.__model = root_model
         self.__property = root_property
+
+    def observe_root(self, callback: EventCallback[StateT]) -> EventToken:
+        return self.observe(lambda x: x, callback)
 
     def observe(self, property: PropertyCallback[StateT, T],
                 callback: EventCallback[T]) -> EventToken:
