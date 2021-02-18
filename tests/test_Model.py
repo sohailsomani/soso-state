@@ -10,7 +10,7 @@ from soso import state
 class State:
     value: int = 0
     d: typing.Dict[str, str] = field(default_factory=dict)
-
+    lst: typing.List[int] = field(default_factory=list)
 
 class Model(state.Model[State]):
     pass
@@ -131,3 +131,15 @@ class TestModel(unittest.TestCase):
         mock.reset_mock()
         model.update(update2)
         mock.assert_called_with("value2")
+
+    def test_funcall(self) -> None:
+        model = Model()
+
+        mock = MagicMock()
+        def update(state:State) -> None:
+            state.lst.append(1)
+        model.observe(lambda x: x.lst, mock)
+        mock.reset_mock()
+
+        model.update(update)
+        mock.assert_called_with([1])

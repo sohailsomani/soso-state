@@ -419,6 +419,21 @@ class SetItem:
         return obj[self.key]
 
 
+@dataclass
+class Call:
+    args: typing.Tuple[typing.Any, ...]
+    kwargs: typing.Dict[str, typing.Any]
+    key: str = '__call__'
+
+    def execute(
+            self, obj: typing.Any
+    ) -> typing.Tuple[typing.Optional[typing.Any], bool]:
+        return obj(*self.args, **self.kwargs), True
+
+    def get_value(self, obj: typing.Any) -> typing.Any:
+        return obj.__call__
+
+
 class Proxy:
     def __init__(self) -> None:
         self.__dict__['__ops'] = []
@@ -436,6 +451,9 @@ class Proxy:
     def __getitem__(self, key: typing.Any) -> "Proxy":
         self.__dict__['__ops'].append(GetItem(key))
         return self
+
+    def __call__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
+        self.__dict__['__ops'].append(Call(args, kwargs))
 
 
 def _get_ops(proxy: Proxy) -> typing.List[PropertyOp]:
