@@ -61,11 +61,14 @@ class Node:
 
 
 class Model(typing.Generic[StateT], protocols.Model[StateT]):
-    def __init__(self) -> None:
+    def __init__(self, initial_state: typing.Optional[StateT] = None) -> None:
         model_klass = self.__orig_bases__[-1]  # type:ignore
         self.__state_klass = state_klass = typing.get_args(model_klass)[0]
         assert is_dataclass(state_klass)
-        self.__current_state: StateT = state_klass()
+        if initial_state is None:
+            self.__current_state: StateT = state_klass()
+        else:
+            self.__current_state = copy.deepcopy(initial_state)
         self.__root = Node()
 
     def __get_node_for_ops(self, ops: typing.List[PropertyOp]) -> Node:

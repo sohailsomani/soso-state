@@ -146,3 +146,8 @@ class TestModel(unittest.TestCase):
 
         model.update(update)
         mock.assert_called_with([1])
+
+    def test_constructor(self) -> None:
+        model = Model(State(value=42))
+
+        self.assertEqual(model.state.value, 42)
