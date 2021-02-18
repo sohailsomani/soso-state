@@ -12,6 +12,7 @@ class State:
     d: typing.Dict[str, str] = field(default_factory=dict)
     lst: typing.List[int] = field(default_factory=list)
 
+
 class Model(state.Model[State]):
     pass
 
@@ -136,8 +137,10 @@ class TestModel(unittest.TestCase):
         model = Model()
 
         mock = MagicMock()
-        def update(state:State) -> None:
+
+        def update(state: State) -> None:
             state.lst.append(1)
+
         model.observe(lambda x: x.lst, mock)
         mock.reset_mock()
 
