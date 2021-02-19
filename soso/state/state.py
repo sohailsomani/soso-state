@@ -173,7 +173,9 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
                 child_node.event.emit(child_value)
                 self.__fire_all_child_events(child_node, child_value)
             except Exception:
-                logging.getLogger(__name__).info(traceback.format_exc())
+                # It's common for values to disappear, no need to pepper
+                # info logs. TODO: should GC such child nodes? Probably
+                logging.getLogger(__name__).debug(traceback.format_exc())
 
     @typing.overload
     def update(self, **kwargs: typing.Any) -> None:
