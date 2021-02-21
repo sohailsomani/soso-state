@@ -17,6 +17,14 @@ class Model(state.Model[State]):
     pass
 
 
+class NotADataClass:
+    pass
+
+
+class Model2(state.Model[NotADataClass]):
+    pass
+
+
 class TestModel(unittest.TestCase):
     def test_snapshot(self) -> None:
         model = Model()
@@ -151,3 +159,9 @@ class TestModel(unittest.TestCase):
         model = Model(State(value=42))
 
         self.assertEqual(model.state.value, 42)
+
+        self.assertRaisesRegex(ValueError, "Expected a dataclass",
+                               lambda: Model2())
+
+        self.assertRaisesRegex(ValueError, "Expected a dataclass",
+                               lambda: Model2(NotADataClass()))
