@@ -29,6 +29,7 @@ and how they work together.
 * Flexible:
     * Observe changes to any subset of the application state you are interested
       in ([ui.py](examples/notebooks/ui.py))
+    * Create [streaming](tests/test_Stream.py) calculations with relative ease.
 * Efficient:
     * Zero copying except for snapshot/restore functionality
     * Only events for data that is actually changed are propagated
