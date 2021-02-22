@@ -59,6 +59,12 @@ class TestStream(unittest.TestCase):
                               model.submodel(lambda x: x.period_30_range),
                               n=30)
 
+        values = []
+        model.observe(lambda x: x.sensor_value,
+                      lambda value: values.append(value))
+        # drop the NaN
+        values.clear()
+
         # We'll generate enough to get output for period_10_range but not
         # enough for period_30_range
         generator = sensor(model.submodel(lambda x: x.sensor_value), iters=20)
@@ -82,6 +88,9 @@ class TestStream(unittest.TestCase):
         self.assertTrue(math.isnan(model.state.period_30_range[0]))
         self.assertTrue(math.isnan(model.state.period_30_range[1]))
 
+        self.assertEqual(min(values[-10:]), model.state.period_10_range[0])
+        self.assertEqual(max(values[-10:]), model.state.period_10_range[1])
+
         # Run it a bit more so we get values for period_30
 
         generator = sensor(model.submodel(lambda x: x.sensor_value), iters=20)
@@ -94,3 +103,9 @@ class TestStream(unittest.TestCase):
         self.assertTrue(not math.isnan(model.state.period_10_range[1]))
         self.assertTrue(not math.isnan(model.state.period_30_range[0]))
         self.assertTrue(not math.isnan(model.state.period_30_range[1]))
+
+        self.assertEqual(min(values[-10:]), model.state.period_10_range[0])
+        self.assertEqual(max(values[-10:]), model.state.period_10_range[1])
+
+        self.assertEqual(min(values[-30:]), model.state.period_30_range[0])
+        self.assertEqual(max(values[-30:]), model.state.period_30_range[1])
