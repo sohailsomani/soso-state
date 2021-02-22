@@ -54,7 +54,6 @@ class Event(typing.Generic[T]):
 
         fut: asyncio.Future[T] = asyncio.Future()
         token = self.connect(callback)
-        fut.add_done_callback(lambda f: token.disconnect())
         return fut.__await__()
 
 
