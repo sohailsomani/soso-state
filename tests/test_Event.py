@@ -1,13 +1,8 @@
-import asyncio
+import typing
 import unittest
 from unittest.mock import MagicMock
 
 from soso.state.event import Event
-
-
-async def waitfor(event: Event[int], mock: MagicMock) -> None:
-    result = await event
-    mock(result)
 
 
 class TestEvent(unittest.TestCase):
@@ -22,20 +17,16 @@ class TestEvent(unittest.TestCase):
         mock1.assert_called_with(42)
         mock2.assert_called_with(42)
 
-    def test_multiple_await(self) -> None:
-        # This has nothing to do with asyncio, the original problem was that
-        # event handlers can disconnect and that was made obvious when using
-        # await during a single event's handling from test_Stream
-        event: Event[int] = Event("HELLO2", int)
-        mock1 = MagicMock()
-        mock2 = MagicMock()
+    def test_disconnect_during_event(self) -> None:
+        event: Event[int] = Event("HELLO", int)
 
-        t1 = asyncio.get_event_loop().create_task(waitfor(event, mock1))
-        t2 = asyncio.get_event_loop().create_task(waitfor(event, mock2))
-        asyncio.get_event_loop().call_soon(lambda: event.emit(42))
+        def cb(*a: typing.Any) -> None:
+            token1.disconnect()
 
-        fut = asyncio.gather(t1, t2)
-        asyncio.get_event_loop().run_until_complete(fut)
+        token1 = event.connect(cb)
+        mock = MagicMock()
+        event.connect(mock)
 
-        mock1.assert_called_with(42)
-        mock2.assert_called_with(42)
+        event.emit(42)
+
+        mock.assert_called_with(42)
