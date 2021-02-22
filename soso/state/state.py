@@ -46,6 +46,10 @@ class PropertyOp(typing.Protocol):
     ) -> typing.Tuple[typing.Optional[typing.Any], bool]:
         ...
 
+    def execute_raw(
+            self, obj: typing.Any) -> typing.Optional[typing.Any]:
+        ...
+
     def get_value(self, obj: typing.Any) -> typing.Optional[typing.Any]:
         ...
 
@@ -147,25 +151,27 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
             property: typing.Optional[PropertyCallback[StateT,
                                                        T]] = None) -> None:
         if property is None:
-            self.__current_state = typing.cast(StateT, snapshot)
-            self.__fire_all_child_events(self.__root, self.__current_state)
+
+            def cb(state: StateT) -> T:
+                return state  # type: ignore
+
+            property = cb
+
+        proxy = typing.cast(StateT, Proxy())
+        property(proxy)
+        ops = _get_ops(typing.cast(Proxy, proxy))
+        if isinstance(ops[-1], GetAttr):
+            ops[-1] = SetAttr(ops[-1].key, snapshot)
         else:
-            proxy = typing.cast(StateT, Proxy())
-            property(proxy)
-            ops = _get_ops(typing.cast(Proxy, proxy))
-            node = self.__get_node_for_ops(ops)
-            if isinstance(ops[-1], GetAttr):
-                ops[-1] = SetAttr(ops[-1].key, snapshot)
-            else:
-                assert isinstance(ops[-1], GetItem)
-                ops[-1] = SetItem(ops[-1].key, snapshot)
-            obj: typing.Optional[typing.Any] = self.__current_state
+            assert isinstance(ops[-1], GetItem)
+            ops[-1] = SetItem(ops[-1].key, snapshot)
+
+        def update(state: StateT) -> None:
+            obj: typing.Optional[typing.Any] = state
             for op in ops:
-                obj, _ = op.execute(obj)
-            assert obj is None  # Last should have been a set
-            value = property(self.__current_state)
-            node.event.emit(value)
-            self.__fire_all_child_events(node, value)
+                obj = op.execute_raw(obj)
+
+        self.update(update)
 
     def __fire_all_child_events(self, node: Node, parent: typing.Any) -> None:
         for name, child_node in node.children.items():
@@ -398,6 +404,9 @@ class SetAttr:
             setattr(obj, self.key, self.value)
         return None, changed
 
+    def execute_raw(self, obj: typing.Any) -> typing.Optional[typing.Any]:
+        return setattr(obj, self.key, self.value)
+
     def get_value(self, obj: typing.Any) -> typing.Optional[typing.Any]:
         return getattr(obj, self.key)
 
@@ -410,6 +419,10 @@ class GetItem:
             self, obj: typing.Any
     ) -> typing.Tuple[typing.Optional[typing.Any], bool]:
         return obj[self.key], False
+
+    def execute_raw(
+            self, obj: typing.Any) -> typing.Optional[typing.Any]:
+        return obj[self.key]
 
     def get_value(self, obj: typing.Any) -> typing.Optional[typing.Any]:
         return obj[self.key]
@@ -432,6 +445,9 @@ class SetItem:
             obj[self.key] = self.value
         return None, changed
 
+    def execute_raw(self, obj: typing.Any) -> typing.Optional[typing.Any]:
+        obj[self.key] = self.value
+
     def get_value(self, obj: typing.Any) -> typing.Any:
         return obj[self.key]
 
@@ -446,6 +462,9 @@ class Call:
             self, obj: typing.Any
     ) -> typing.Tuple[typing.Optional[typing.Any], bool]:
         return obj(*self.args, **self.kwargs), True
+
+    def execute_raw(self, obj: typing.Any) -> typing.Optional[typing.Any]:
+        return obj(*self.args, **self.kwargs)
 
     def get_value(self, obj: typing.Any) -> typing.Any:
         return obj.__call__
