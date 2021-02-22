@@ -17,8 +17,11 @@ class State:
     sensor_value: float = NaN
     period_10_range: typing.Tuple[float, float] = field(
         default_factory=lambda: (NaN, NaN))
+    period_10_midpoint: float = NaN
+
     period_30_range: typing.Tuple[float, float] = field(
         default_factory=lambda: (NaN, NaN))
+    period_30_midpoint: float = NaN
 
 
 class Model(state.Model[State]):
@@ -49,6 +52,15 @@ async def sensor(sink: state.protocols.Model[float], iters: int) -> None:
         await asyncio.sleep(0.01)
 
 
+async def midpoint(high: state.protocols.Model[float],
+                   low: state.protocols.Model[float],
+                   sink: state.protocols.Model[float]) -> None:
+    # An example of waiting for multiple values
+    while True:
+        highval, lowval = await asyncio.gather(high.wait_for(), low.wait_for())
+        sink.restore((highval + lowval) / 2)
+
+
 class TestStream(unittest.TestCase):
     def test_simple(self) -> None:
         model = Model()
@@ -72,6 +84,14 @@ class TestStream(unittest.TestCase):
         loop = asyncio.get_event_loop()
         loop.create_task(f1)
         loop.create_task(f2)
+        loop.create_task(
+            midpoint(model.submodel(lambda x: x.period_30_range[1]),
+                     model.submodel(lambda x: x.period_30_range[0]),
+                     model.submodel(lambda x: x.period_30_midpoint)))
+        loop.create_task(
+            midpoint(model.submodel(lambda x: x.period_10_range[1]),
+                     model.submodel(lambda x: x.period_10_range[0]),
+                     model.submodel(lambda x: x.period_10_midpoint)))
         t3 = loop.create_task(generator)
 
         # Ensure all NaN
@@ -104,8 +124,12 @@ class TestStream(unittest.TestCase):
         self.assertTrue(not math.isnan(model.state.period_30_range[0]))
         self.assertTrue(not math.isnan(model.state.period_30_range[1]))
 
-        self.assertEqual(min(values[-10:]), model.state.period_10_range[0])
-        self.assertEqual(max(values[-10:]), model.state.period_10_range[1])
+        min10, max10 = min(values[-10:]), max(values[-10:])
+        min30, max30 = min(values[-30:]), max(values[-30:])
 
-        self.assertEqual(min(values[-30:]), model.state.period_30_range[0])
-        self.assertEqual(max(values[-30:]), model.state.period_30_range[1])
+        self.assertEqual((min10, max10), model.state.period_10_range)
+        self.assertEqual((min30, max30), model.state.period_30_range)
+
+        # And finally, check the midpoints
+        self.assertEqual(model.state.period_10_midpoint, (min10 + max10) / 2)
+        self.assertEqual(model.state.period_30_midpoint, (min30 + max30) / 2)

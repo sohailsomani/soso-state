@@ -35,7 +35,12 @@ class Model(typing.Generic[StateT], typing.Protocol):
     def state(self) -> StateT:
         ...
 
+    @typing.overload
     async def wait_for(self, property: typing.Callable[[StateT], T]) -> T:
+        ...
+
+    @typing.overload
+    async def wait_for(self) -> StateT:
         ...
 
     @typing.overload
