@@ -102,3 +102,25 @@ class TestSubModel(unittest.TestCase):
         sub.update(update)
         mock1.assert_called_with([User("willsmith", "willsmith@gmail.com")])
         mock2.assert_called_with(5)
+
+    def test_inline_submodel(self) -> None:
+        @dataclass
+        class SubState:
+            v1: int = 0
+            v2: int = 0
+
+        @dataclass
+        class RootState:
+            sub: SubState = field(default_factory=SubState)
+
+        class Model(state.Model[RootState]):
+            pass
+
+        model = Model()
+        mock = MagicMock()
+        model.observe(lambda x: x.sub, mock)
+        mock.reset_mock()
+
+        model.submodel(lambda x: x.sub).update(v1=4, v2=2)
+
+        mock.assert_called_with(SubState(v1=4, v2=2))

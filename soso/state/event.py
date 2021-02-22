@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import typing
 import weakref
 
@@ -21,7 +22,12 @@ class Event(typing.Generic[T]):
 
     def __call__(self, __value: T) -> None:
         for _, f in self._handlers:
-            f(__value)
+            try:
+                f(__value)
+            except Exception as e:
+                logger = logging.getLogger(__name__)
+                logger.error("Exception occurred when emitting event")
+                logger.exception(e)
 
     def emit(self, __value: T) -> None:
         self(__value)

@@ -244,11 +244,21 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
         if len(stmts) == 0:
             return
 
-        # Always emit root event
-        self.__root.event.emit(__submodel_root(self.__current_state))
+        # Always emit root
+        self.__root.event.emit(self.__current_state)
+
+        # Emit everything from actual root to __submodel_root
         rootproxy = Proxy()
         __submodel_root(rootproxy)
         rootops = _get_ops(rootproxy)
+        curr = []
+        for op in rootops:
+            curr.append(op)
+            node = self.__get_node_for_ops(curr)
+            value = self.__get_value_for_ops(curr)
+            node.event.emit(value)
+
+        # Now emit the fields that were actually modified
         for stmt in stmts:
             assert stmt
             # if foo.bar.baz[0] is modified then we need to signal foo,
