@@ -409,7 +409,8 @@ class SetAttr:
         return None, changed
 
     def execute_raw(self, obj: typing.Any) -> typing.Optional[typing.Any]:
-        return setattr(obj, self.key, self.value)
+        setattr(obj, self.key, self.value)
+        return None
 
     def get_value(self, obj: typing.Any) -> typing.Optional[typing.Any]:
         return getattr(obj, self.key)
@@ -450,6 +451,7 @@ class SetItem:
 
     def execute_raw(self, obj: typing.Any) -> typing.Optional[typing.Any]:
         obj[self.key] = self.value
+        return None
 
     def get_value(self, obj: typing.Any) -> typing.Any:
         return obj[self.key]
