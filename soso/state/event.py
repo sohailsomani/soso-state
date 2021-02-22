@@ -21,7 +21,9 @@ class Event(typing.Generic[T]):
             "EventToken", EventCallback[T]]] = []
 
     def __call__(self, __value: T) -> None:
-        for _, f in self._handlers:
+        # Copy the list of handlers just in case an event handler modifies it
+        handlers = self._handlers[:]
+        for _, f in handlers:
             try:
                 f(__value)
             except Exception as e:

@@ -46,8 +46,7 @@ class PropertyOp(typing.Protocol):
     ) -> typing.Tuple[typing.Optional[typing.Any], bool]:
         ...
 
-    def execute_raw(
-            self, obj: typing.Any) -> typing.Optional[typing.Any]:
+    def execute_raw(self, obj: typing.Any) -> typing.Optional[typing.Any]:
         ...
 
     def get_value(self, obj: typing.Any) -> typing.Optional[typing.Any]:
@@ -76,12 +75,16 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
         else:
             self.__current_state = copy.deepcopy(initial_state)
         self.__root = Node()
+        self.__root.event._name = "root"
 
     def __get_node_for_ops(self, ops: typing.List[PropertyOp]) -> Node:
         root: Node = self.__root
+        s = root.event._name
         for op in ops:
             root = root.children[op.key]
             root.op = op
+            s += '.' + str(op.key)
+            root.event._name = s
         return root
 
     def __get_value_for_ops(self, ops: typing.List[PropertyOp]) -> typing.Any:
@@ -151,11 +154,9 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
             property: typing.Optional[PropertyCallback[StateT,
                                                        T]] = None) -> None:
         if property is None:
-
-            def cb(state: StateT) -> T:
-                return state  # type: ignore
-
-            property = cb
+            self.__current_state = typing.cast(StateT, snapshot)
+            self.__fire_all_child_events(self.__root, self.__current_state)
+            return
 
         proxy = typing.cast(StateT, Proxy())
         property(proxy)
@@ -386,6 +387,9 @@ class GetAttr:
     ) -> typing.Tuple[typing.Optional[typing.Any], bool]:
         return getattr(obj, self.key), False
 
+    def execute_raw(self, obj: typing.Any) -> typing.Optional[typing.Any]:
+        return getattr(obj, self.key)
+
     def get_value(self, obj: typing.Any) -> typing.Optional[typing.Any]:
         return getattr(obj, self.key)
 
@@ -420,8 +424,7 @@ class GetItem:
     ) -> typing.Tuple[typing.Optional[typing.Any], bool]:
         return obj[self.key], False
 
-    def execute_raw(
-            self, obj: typing.Any) -> typing.Optional[typing.Any]:
+    def execute_raw(self, obj: typing.Any) -> typing.Optional[typing.Any]:
         return obj[self.key]
 
     def get_value(self, obj: typing.Any) -> typing.Optional[typing.Any]:

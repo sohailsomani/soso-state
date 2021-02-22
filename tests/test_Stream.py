@@ -44,7 +44,8 @@ async def range_calculator(source: state.protocols.Model[float],
 
 async def sensor(sink: state.protocols.Model[float], iters: int) -> None:
     for _ in range(iters):
-        sink.restore(random.random())
+        value = random.random()
+        sink.restore(value)
         await asyncio.sleep(0.01)
 
 
@@ -80,3 +81,16 @@ class TestStream(unittest.TestCase):
         self.assertTrue(not math.isnan(model.state.period_10_range[1]))
         self.assertTrue(math.isnan(model.state.period_30_range[0]))
         self.assertTrue(math.isnan(model.state.period_30_range[1]))
+
+        # Run it a bit more so we get values for period_30
+
+        generator = sensor(model.submodel(lambda x: x.sensor_value), iters=20)
+        t4 = loop.create_task(generator)
+
+        asyncio.get_event_loop().run_until_complete(t4)
+
+        # Now should have values for both
+        self.assertTrue(not math.isnan(model.state.period_10_range[0]))
+        self.assertTrue(not math.isnan(model.state.period_10_range[1]))
+        self.assertTrue(not math.isnan(model.state.period_30_range[0]))
+        self.assertTrue(not math.isnan(model.state.period_30_range[1]))
