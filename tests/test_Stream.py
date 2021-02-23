@@ -33,11 +33,8 @@ async def range_calculator(source: state.protocols.Model[float],
                                                                     float]],
                            n: int) -> None:
     values = []
-    while True:
-        # Although this only returns a new value when the source changes, one
-        # can imagine using a "tick" variable if that is undesired
-        new_value = await source.wait_for(lambda x: x)
-        values.append(new_value)
+    async for value in source.wait_for():
+        values.append(value)
         values = values[-n:]
         if len(values) < n:
             continue

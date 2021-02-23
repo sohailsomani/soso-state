@@ -17,8 +17,8 @@ class EventCallback(typing.Generic[T_contra], typing.Protocol):
 class Event(typing.Generic[T]):
     def __init__(self, name: str, *arg_types: type, **kwarg_types: type):
         self._name = name
-        self._handlers: typing.List[typing.Tuple[
-            "EventToken", EventCallback[T]]] = []
+        self._handlers: typing.List[typing.Tuple["EventToken",
+                                                 EventCallback[T]]] = []
 
     def __call__(self, __value: T) -> None:
         # Copy the list of handlers just in case an event handler modifies it
@@ -57,6 +57,21 @@ class Event(typing.Generic[T]):
         fut: asyncio.Future[T] = asyncio.Future()
         token = self.connect(callback)
         return fut.__await__()
+
+    async def __aiter__(self) -> typing.AsyncGenerator[T, T]:
+        q: asyncio.Queue[T] = asyncio.Queue()
+
+        def callback(arg: T) -> None:
+            q.put_nowait(arg)
+
+        token = self.connect(callback)
+
+        try:
+            while True:
+                value: T = await q.get()
+                yield value
+        finally:
+            token.disconnect()
 
 
 class EventToken:

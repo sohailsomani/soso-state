@@ -1,6 +1,6 @@
 import typing
 
-from soso.state.event import EventCallback, EventToken
+from soso.state.event import Event, EventCallback, EventToken
 
 StateT_contra = typing.TypeVar('StateT_contra', contravariant=True)
 StateT = typing.TypeVar('StateT')
@@ -36,11 +36,11 @@ class Model(typing.Generic[StateT], typing.Protocol):
         ...
 
     @typing.overload
-    async def wait_for(self, property: typing.Callable[[StateT], T]) -> T:
+    def wait_for(self, property: typing.Callable[[StateT], T]) -> Event[T]:
         ...
 
     @typing.overload
-    async def wait_for(self) -> StateT:
+    def wait_for(self) -> Event[StateT]:
         ...
 
     @typing.overload

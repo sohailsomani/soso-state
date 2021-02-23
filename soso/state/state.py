@@ -122,10 +122,10 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
     def event(self, property: PropertyCallback[StateT, T]) -> Event[T]:
         return self.__event(property)[0]
 
-    async def wait_for(
+    def wait_for(
             self,
             property: typing.Optional[PropertyCallback[StateT,
-                                                       T]] = None) -> T:
+                                                       T]] = None) -> Event[T]:
         if property is None:
 
             def cb(state: StateT) -> T:
@@ -133,8 +133,7 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
 
             property = cb
 
-        result = await self.event(property)
-        return result
+        return self.event(property)
 
     @typing.overload
     def snapshot(self) -> StateT:
@@ -322,10 +321,10 @@ class _SubModel(typing.Generic[RootStateT, StateT], protocols.Model[StateT]):
     def state(self) -> StateT:
         return self.__property(self.__model.state)
 
-    async def wait_for(
+    def wait_for(
             self,
             property: typing.Optional[PropertyCallback[StateT,
-                                                       T]] = None) -> T:
+                                                       T]] = None) -> Event[T]:
         if property is None:
 
             def cb(root: StateT) -> T:
@@ -337,8 +336,7 @@ class _SubModel(typing.Generic[RootStateT, StateT], protocols.Model[StateT]):
             assert property is not None
             return property(self.__property(root))
 
-        result = await self.__model.wait_for(propfunc)
-        return result
+        return self.__model.wait_for(propfunc)
 
     @typing.overload
     def snapshot(self) -> StateT:
