@@ -21,9 +21,7 @@ class Event(typing.Generic[T]):
                                                  EventCallback[T]]] = []
 
     def __call__(self, __value: T) -> None:
-        # Copy the list of handlers just in case an event handler modifies it
-        handlers = self._handlers[:]
-        for _, f in handlers:
+        for _, f in self._handlers:
             try:
                 f(__value)
             except Exception as e:
@@ -42,7 +40,9 @@ class Event(typing.Generic[T]):
     def disconnect_token(self, token: "EventToken") -> None:
         for i in range(len(self._handlers)):
             if id(self._handlers[i][0]) == id(token):
-                del self._handlers[i]
+                # Create a copy of the handlers array just in case this is
+                # happening in an event callback
+                self._handlers = [h for h in self._handlers if id(h[0]) != id(token)]
                 break
 
     def _new_token(self) -> "EventToken":
