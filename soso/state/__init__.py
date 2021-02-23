@@ -1,2 +1,4 @@
-from soso.state.event import *  # noqa: F401, F403
-from soso.state.state import *  # noqa: F401, F403
+# flake8: noqa
+
+from soso.state.event import *
+from soso.state.state import *

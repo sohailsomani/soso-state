@@ -165,3 +165,10 @@ class TestModel(unittest.TestCase):
 
         self.assertRaisesRegex(ValueError, "Expected a dataclass",
                                lambda: Model2(NotADataClass()))
+
+    def test_build_model(self) -> None:
+        model = state.build_model(State)
+        m2: state.protocols.Model[State] = model
+        self.assertIsNotNone(m2)
+
+        self.assertEqual(model.state.value, 0)

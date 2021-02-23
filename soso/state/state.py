@@ -23,7 +23,7 @@ except ImportError:
         return x != y  # type: ignore
 
 
-__all__ = ['Model', 'StateT', 'T', 'PropertyCallback']
+__all__ = ['Model', 'StateT', 'T', 'PropertyCallback', 'build_model']
 
 StateT_contra = typing.TypeVar('StateT_contra', contravariant=True)
 StateT = typing.TypeVar('StateT')
@@ -66,9 +66,12 @@ class Node:
 class Model(typing.Generic[StateT], protocols.Model[StateT]):
     def __init__(self, initial_state: typing.Optional[StateT] = None) -> None:
         model_klass = self.__orig_bases__[-1]  # type:ignore
-        self.__state_klass = state_klass = typing.get_args(model_klass)[0]
+        if initial_state is None:
+            self.__state_klass = state_klass = typing.get_args(model_klass)[0]
+        else:
+            self.__state_klass = state_klass = initial_state.__class__
         if not is_dataclass(state_klass):
-            raise ValueError("Expected a dataclass, got %s", state_klass)
+            raise ValueError("Expected a dataclass, got %s" % state_klass)
         assert is_dataclass(state_klass)
         if initial_state is None:
             self.__current_state: StateT = state_klass()
@@ -123,9 +126,9 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
         return self.__event(property)[0]
 
     def wait_for(
-            self,
-            property: typing.Optional[PropertyCallback[StateT,
-                                                       T]] = None) -> Event[T]:
+        self,
+        property: typing.Optional[PropertyCallback[StateT,
+                                                   T]] = None) -> Event[T]:
         if property is None:
 
             def cb(state: StateT) -> T:
@@ -322,9 +325,9 @@ class _SubModel(typing.Generic[RootStateT, StateT], protocols.Model[StateT]):
         return self.__property(self.__model.state)
 
     def wait_for(
-            self,
-            property: typing.Optional[PropertyCallback[StateT,
-                                                       T]] = None) -> Event[T]:
+        self,
+        property: typing.Optional[PropertyCallback[StateT,
+                                                   T]] = None) -> Event[T]:
         if property is None:
 
             def cb(root: StateT) -> T:
@@ -518,3 +521,7 @@ class Proxy:
 
 def _get_ops(proxy: Proxy) -> typing.List[PropertyOp]:
     return proxy.__dict__['__ops']  # type:ignore
+
+
+def build_model(klass: typing.Type[StateT]) -> protocols.Model[StateT]:
+    return Model(klass())

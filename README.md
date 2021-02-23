@@ -65,10 +65,7 @@ class AppState:
   assistant_to_the_regional_managers: list[Person] = field(default_factory=list)
   employees: list[Person] = field(default_factory=list)
 
-class AppModel(state.Model[AppState]):
-  pass
-
-app = AppModel()
+app = state.build_model(AppState)
 
 app.update(
   regional_managers = [Person("Michael","Scott")],
@@ -222,6 +219,8 @@ This is probably fine.
 
 ```python
 from contextlib import contextmanager
+
+
 def atomic_updates(model):
     snapshot = model.snapshot()
     try:
