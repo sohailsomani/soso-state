@@ -42,7 +42,8 @@ class Event(typing.Generic[T]):
             if id(self._handlers[i][0]) == id(token):
                 # Create a copy of the handlers array just in case this is
                 # happening in an event callback
-                self._handlers = [h for h in self._handlers if id(h[0]) != id(token)]
+                self._handlers = [h for h in self._handlers
+                                  if id(h[0]) != id(token)]
                 break
 
     def _new_token(self) -> "EventToken":
