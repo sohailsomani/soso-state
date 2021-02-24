@@ -18,7 +18,7 @@ try:
             return id(x) != id(y)
         else:
             return x != y  # type: ignore
-except ImportError:
+except Exception:
 
     def _is_not_equal(x: typing.Any, y: typing.Any) -> bool:
         return x != y  # type: ignore
