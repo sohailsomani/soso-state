@@ -1,6 +1,6 @@
 {
     "template": "https://github.com/sohailsomani/soso-cookiecutter-python",
-    "commit": "7937ad358bf9ee55495506c1367b65e9868a3f98",
+    "commit": "03e101b98f46190ae15d250bfdbde74308b4f3e8",
     "context": {
         "cookiecutter": {
             "project_name": "state",
