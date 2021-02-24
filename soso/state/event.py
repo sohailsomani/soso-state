@@ -14,13 +14,36 @@ class EventCallback(typing.Generic[T_contra], typing.Protocol):
         ...
 
 
+class _LoggerInterface(typing.Protocol):
+    def info(self, msg: str, *args: typing.Any) -> None:
+        ...
+
+    def debug(self, msg: str, *args: typing.Any) -> None:
+        ...
+
+
+class _DummyLogger:
+    def info(self, msg, *args):  # type: ignore
+        pass
+
+    def debug(self, msg, *args):  # type: ignore
+        pass
+
+
 class Event(typing.Generic[T]):
     def __init__(self, name: str, *arg_types: type, **kwarg_types: type):
         self._name = name
-        self._handlers: typing.List[typing.Tuple["EventToken",
-                                                 EventCallback[T]]] = []
+        self._handlers: typing.List[typing.Tuple["EventToken", EventCallback[T]]] = []
+
+    _logger: _LoggerInterface = _DummyLogger()
+
+    @staticmethod
+    def _initialize_logging() -> None:
+        Event._logger = logging.getLogger(__name__)
+        Event._logger.info("Event logger initialized")
 
     def __call__(self, __value: T) -> None:
+        self._logger.debug("EMITTING: %s", self._name)
         for _, f in self._handlers:
             try:
                 f(__value)
@@ -42,8 +65,7 @@ class Event(typing.Generic[T]):
             if id(self._handlers[i][0]) == id(token):
                 # Create a copy of the handlers array just in case this is
                 # happening in an event callback
-                self._handlers = [h for h in self._handlers
-                                  if id(h[0]) != id(token)]
+                self._handlers = [h for h in self._handlers if id(h[0]) != id(token)]
                 break
 
     def _new_token(self) -> "EventToken":
@@ -77,8 +99,7 @@ class Event(typing.Generic[T]):
 
 class EventToken:
     def __init__(self, event: Event[T]):
-        self.event: typing.Optional[weakref.ReferenceType[
-            Event[T]]] = weakref.ref(event)
+        self.event: typing.Optional[weakref.ReferenceType[Event[T]]] = weakref.ref(event)
 
     def disconnect(self) -> None:
         if self.event is None:

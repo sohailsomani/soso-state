@@ -6,7 +6,8 @@ from collections import defaultdict
 from dataclasses import dataclass, field, is_dataclass
 
 from soso.state import protocols
-from soso.state.event import Event, EventCallback, EventToken
+from soso.state.event import (Event, EventCallback, EventToken, _DummyLogger,
+                              _LoggerInterface)
 
 try:
     import pandas as pd
@@ -23,7 +24,7 @@ except ImportError:
         return x != y  # type: ignore
 
 
-__all__ = ['Model', 'StateT', 'T', 'PropertyCallback', 'build_model']
+__all__ = ['Model', 'StateT', 'T', 'PropertyCallback', 'build_model', 'initialize_logging']
 
 StateT_contra = typing.TypeVar('StateT_contra', contravariant=True)
 StateT = typing.TypeVar('StateT')
@@ -36,14 +37,17 @@ PropertyCallback = typing.Callable[[StateT_contra], T_co]
 StateUpdateCallback = typing.Callable[[StateT_contra], None]
 
 
+def initialize_logging() -> None:
+    Model._logger = logging.getLogger(__name__)
+    Event._initialize_logging()
+
+
 class PropertyOp(typing.Protocol):
     @property
     def key(self) -> typing.Any:
         ...
 
-    def execute(
-            self, obj: typing.Any
-    ) -> typing.Tuple[typing.Optional[typing.Any], bool]:
+    def execute(self, obj: typing.Any) -> typing.Tuple[typing.Optional[typing.Any], bool]:
         ...
 
     def execute_raw(self, obj: typing.Any) -> typing.Optional[typing.Any]:
@@ -55,15 +59,15 @@ class PropertyOp(typing.Protocol):
 
 @dataclass
 class Node:
-    children: typing.DefaultDict[str, "Node"] = field(
-        default_factory=lambda: defaultdict(Node))
-    event: Event[typing.Any] = field(
-        default_factory=lambda: Event("NodeUpdateEvent"))
+    children: typing.DefaultDict[str, "Node"] = field(default_factory=lambda: defaultdict(Node))
+    event: Event[typing.Any] = field(default_factory=lambda: Event("NodeUpdateEvent"))
     # The type of access to this node
     op: typing.Optional[PropertyOp] = None
 
 
 class Model(typing.Generic[StateT], protocols.Model[StateT]):
+    _logger: _LoggerInterface = _DummyLogger()
+
     def __init__(self, initial_state: typing.Optional[StateT] = None) -> None:
         model_klass = self.__orig_bases__[-1]  # type:ignore
         if initial_state is None:
@@ -96,15 +100,13 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
             root = op.get_value(root)
         return root
 
-    def submodel(self, func: PropertyCallback[StateT,
-                                              T]) -> protocols.Model[T]:
+    def submodel(self, func: PropertyCallback[StateT, T]) -> protocols.Model[T]:
         return _SubModel(self, func)
 
     def observe_root(self, callback: EventCallback[StateT]) -> EventToken:
         return self.observe(lambda x: x, callback)
 
-    def observe(self, func: PropertyCallback[StateT, T],
-                callback: EventCallback[T]) -> EventToken:
+    def observe(self, func: PropertyCallback[StateT, T], callback: EventCallback[T]) -> EventToken:
         event, ops = self.__event(func)
         token = event.connect(callback)
         value = self.__get_value_for_ops(ops)
@@ -113,8 +115,8 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
         return token
 
     def __event(
-        self, func: PropertyCallback[StateT, T]
-    ) -> typing.Tuple[Event[T], typing.List[PropertyOp]]:
+            self, func: PropertyCallback[StateT,
+                                         T]) -> typing.Tuple[Event[T], typing.List[PropertyOp]]:
         proxy: StateT = typing.cast(StateT, Proxy())
         func(proxy)
         ops = _get_ops(proxy)  # type:ignore
@@ -125,10 +127,7 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
     def event(self, property: PropertyCallback[StateT, T]) -> Event[T]:
         return self.__event(property)[0]
 
-    def wait_for(
-        self,
-        property: typing.Optional[PropertyCallback[StateT,
-                                                   T]] = None) -> Event[T]:
+    def wait_for(self, property: typing.Optional[PropertyCallback[StateT, T]] = None) -> Event[T]:
         if property is None:
 
             def cb(state: StateT) -> T:
@@ -146,10 +145,7 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
     def snapshot(self, property: PropertyCallback[StateT, T]) -> T:
         ...
 
-    def snapshot(
-            self,
-            property: typing.Optional[PropertyCallback[StateT,
-                                                       T]] = None) -> T:
+    def snapshot(self, property: typing.Optional[PropertyCallback[StateT, T]] = None) -> T:
         if property is None:
 
             def cb(x: StateT) -> StateT:
@@ -160,11 +156,9 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
         subtree = property(self.state)
         return copy.deepcopy(subtree)
 
-    def restore(
-            self,
-            snapshot: typing.Union[T, StateT],
-            property: typing.Optional[PropertyCallback[StateT,
-                                                       T]] = None) -> None:
+    def restore(self,
+                snapshot: typing.Union[T, StateT],
+                property: typing.Optional[PropertyCallback[StateT, T]] = None) -> None:
         if property is None:
             self.__current_state = typing.cast(StateT, snapshot)
             self.__fire_all_child_events(self.__root, self.__current_state)
@@ -187,6 +181,7 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
         self.update(update)
 
     def __fire_all_child_events(self, node: Node, parent: typing.Any) -> None:
+        self._logger.debug("Firing all child events: %s", node.event._name)
         for name, child_node in node.children.items():
             try:
                 assert child_node.op is not None
@@ -206,8 +201,7 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
     def update(self, func: StateUpdateCallback[StateT]) -> None:
         ...
 
-    def update(self, *args: StateUpdateCallback[StateT],
-               **kwargs: typing.Any) -> None:
+    def update(self, *args: StateUpdateCallback[StateT], **kwargs: typing.Any) -> None:
         func: StateUpdateCallback[StateT]
         if '__submodel_root' in kwargs:
             __submodel_root = kwargs['__submodel_root']
@@ -237,12 +231,12 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
         proxy = Proxy()
         func(proxy)  # type: ignore
         ops = _get_ops(proxy)
-        obj: typing.Optional[typing.Any] = __submodel_root(
-            self.__current_state)
+        obj: typing.Optional[typing.Any] = __submodel_root(self.__current_state)
 
         # Apply changes tos tate
         stmts: typing.List[typing.List[PropertyOp]] = []
         curr_stmt: typing.List[PropertyOp] = []
+        self._logger.debug("Update ops: %s", ops)
         for op in ops:
             curr_stmt.append(op)
             obj, changed = op.execute(obj)
@@ -324,10 +318,7 @@ class _SubModel(typing.Generic[RootStateT, StateT], protocols.Model[StateT]):
     def state(self) -> StateT:
         return self.__property(self.__model.state)
 
-    def wait_for(
-        self,
-        property: typing.Optional[PropertyCallback[StateT,
-                                                   T]] = None) -> Event[T]:
+    def wait_for(self, property: typing.Optional[PropertyCallback[StateT, T]] = None) -> Event[T]:
         if property is None:
 
             def cb(root: StateT) -> T:
@@ -350,9 +341,9 @@ class _SubModel(typing.Generic[RootStateT, StateT], protocols.Model[StateT]):
         ...
 
     def snapshot(
-        self,
-        property: typing.Optional[PropertyCallback[StateT, T]] = None
-    ) -> typing.Union[StateT, T]:
+            self,
+            property: typing.Optional[PropertyCallback[StateT,
+                                                       T]] = None) -> typing.Union[StateT, T]:
         def propfunc(root: RootStateT) -> typing.Union[StateT, T]:
             if property is None:
                 return self.__property(root)
@@ -361,11 +352,9 @@ class _SubModel(typing.Generic[RootStateT, StateT], protocols.Model[StateT]):
 
         return self.__model.snapshot(propfunc)
 
-    def restore(
-            self,
-            snapshot: typing.Union[StateT, T],
-            property: typing.Optional[PropertyCallback[StateT,
-                                                       T]] = None) -> None:
+    def restore(self,
+                snapshot: typing.Union[StateT, T],
+                property: typing.Optional[PropertyCallback[StateT, T]] = None) -> None:
         def propfunc(root: RootStateT) -> typing.Union[StateT, T]:
             if property is None:
                 return self.__property(root)
@@ -382,12 +371,10 @@ class _SubModel(typing.Generic[RootStateT, StateT], protocols.Model[StateT]):
     def update(self, property: StateUpdateCallback[StateT]) -> None:
         ...
 
-    def update(self, *args: StateUpdateCallback[StateT],
-               **kwargs: typing.Any) -> None:
+    def update(self, *args: StateUpdateCallback[StateT], **kwargs: typing.Any) -> None:
         self.__model.update(*args, __submodel_root=self.__property, **kwargs)
 
-    def submodel(self, property: PropertyCallback[StateT,
-                                                  T]) -> protocols.Model[T]:
+    def submodel(self, property: PropertyCallback[StateT, T]) -> protocols.Model[T]:
         def func(x: RootStateT) -> T:
             return property(self.__property(x))
 
@@ -404,9 +391,7 @@ class _SubModel(typing.Generic[RootStateT, StateT], protocols.Model[StateT]):
 class GetAttr:
     key: typing.Any
 
-    def execute(
-            self, obj: typing.Any
-    ) -> typing.Tuple[typing.Optional[typing.Any], bool]:
+    def execute(self, obj: typing.Any) -> typing.Tuple[typing.Optional[typing.Any], bool]:
         return getattr(obj, self.key), False
 
     def execute_raw(self, obj: typing.Any) -> typing.Optional[typing.Any]:
@@ -421,9 +406,7 @@ class SetAttr:
     key: typing.Any
     value: typing.Any
 
-    def execute(
-            self, obj: typing.Any
-    ) -> typing.Tuple[typing.Optional[typing.Any], bool]:
+    def execute(self, obj: typing.Any) -> typing.Tuple[typing.Optional[typing.Any], bool]:
         curr_value = getattr(obj, self.key)
         changed = _is_not_equal(curr_value, self.value)
         if changed:
@@ -442,9 +425,7 @@ class SetAttr:
 class GetItem:
     key: typing.Any
 
-    def execute(
-            self, obj: typing.Any
-    ) -> typing.Tuple[typing.Optional[typing.Any], bool]:
+    def execute(self, obj: typing.Any) -> typing.Tuple[typing.Optional[typing.Any], bool]:
         return obj[self.key], False
 
     def execute_raw(self, obj: typing.Any) -> typing.Optional[typing.Any]:
@@ -459,9 +440,7 @@ class SetItem:
     key: typing.Any
     value: typing.Any
 
-    def execute(
-            self, obj: typing.Any
-    ) -> typing.Tuple[typing.Optional[typing.Any], bool]:
+    def execute(self, obj: typing.Any) -> typing.Tuple[typing.Optional[typing.Any], bool]:
         try:
             curr_value = obj[self.key]
             changed = curr_value != self.value
@@ -485,9 +464,7 @@ class Call:
     kwargs: typing.Dict[str, typing.Any]
     key: str = '__call__'
 
-    def execute(
-            self, obj: typing.Any
-    ) -> typing.Tuple[typing.Optional[typing.Any], bool]:
+    def execute(self, obj: typing.Any) -> typing.Tuple[typing.Optional[typing.Any], bool]:
         return obj(*self.args, **self.kwargs), True
 
     def execute_raw(self, obj: typing.Any) -> typing.Optional[typing.Any]:
