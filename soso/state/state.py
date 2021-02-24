@@ -1,6 +1,5 @@
 import copy
 import logging
-import sys
 import traceback
 import typing
 from collections import defaultdict
@@ -9,21 +8,6 @@ from dataclasses import dataclass, field, is_dataclass
 from soso.state import protocols
 from soso.state.event import (Event, EventCallback, EventToken, _DummyLogger,
                               _LoggerInterface)
-
-if 'pandas' in sys.modules:
-    import pandas as pd
-
-    def _is_not_equal(x: typing.Any, y: typing.Any) -> bool:
-        if isinstance(x, (pd.DataFrame, pd.Series)) or \
-           isinstance(y, (pd.DataFrame, pd.Series)):
-            return id(x) != id(y)
-        else:
-            return x != y  # type: ignore
-else:
-
-    def _is_not_equal(x: typing.Any, y: typing.Any) -> bool:
-        return x != y  # type: ignore
-
 
 __all__ = ['Model', 'StateT', 'T', 'PropertyCallback', 'build_model', 'initialize_logging']
 
@@ -409,7 +393,7 @@ class SetAttr:
 
     def execute(self, obj: typing.Any) -> typing.Tuple[typing.Optional[typing.Any], bool]:
         curr_value = getattr(obj, self.key)
-        changed = _is_not_equal(curr_value, self.value)
+        changed = curr_value != self.value
         if changed:
             setattr(obj, self.key, self.value)
         return None, changed
