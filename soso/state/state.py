@@ -1,5 +1,6 @@
 import copy
 import logging
+import sys
 import traceback
 import typing
 from collections import defaultdict
@@ -9,7 +10,7 @@ from soso.state import protocols
 from soso.state.event import (Event, EventCallback, EventToken, _DummyLogger,
                               _LoggerInterface)
 
-try:
+if 'pandas' in sys.modules:
     import pandas as pd
 
     def _is_not_equal(x: typing.Any, y: typing.Any) -> bool:
@@ -18,7 +19,7 @@ try:
             return id(x) != id(y)
         else:
             return x != y  # type: ignore
-except Exception:
+else:
 
     def _is_not_equal(x: typing.Any, y: typing.Any) -> bool:
         return x != y  # type: ignore
