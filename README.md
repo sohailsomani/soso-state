@@ -64,7 +64,7 @@ from dataclasses import dataclass, field
 
 from soso import state
 
-
+# Step 1: define components of application state
 @dataclass
 class Person:
   first_name: str
@@ -76,8 +76,10 @@ class AppState:
   assistant_to_the_regional_managers: list[Person] = field(default_factory=list)
   employees: list[Person] = field(default_factory=list)
 
+# Step 2: create the model
 app = state.build_model(AppState)
 
+# Update the model
 app.update(
   regional_managers = [Person("Michael","Scott")],
   assistant_to_the_regional_managers = [Person("Dwight","Schrute")],
@@ -138,6 +140,7 @@ A simple (incomplete) example is below. A fuller example is available in [stream
 
 ```python
 from soso import state
+
 
 # Step 1: define the shape of your state
 @dataclasses.dataclass
