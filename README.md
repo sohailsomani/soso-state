@@ -12,7 +12,8 @@ and how they work together.
 
 
 * [Main Benefits](#main-benefits): it gud
-* [Quickstart](#quickstart)
+* [Quickstart - Event-based](#quickstart---event-based)
+* [Quickstart - Streaming](#quickstart---streaming)
 * [Status](#status): In daily use
 * [Motivation](#motivation): Don't Repeat Yourself, Keep It Simple
 * [Implementation](#implementation): Proxy -> writes -> events
@@ -38,7 +39,7 @@ and how they work together.
     * Using Python's optional strong static typing ([no, really](typecheck.png)) to catch as many
       errors as possible.
 
-## Quickstart
+## Quickstart - Event-based
 
 ```sh
 $ python3 -m pip install git+https://github.com/sohailsomani/soso-state
@@ -107,19 +108,80 @@ app.observe(lambda state: state.regional_managers,
 # output: [Person("Jim","Halpert")] [Person("Pam","Halpert")]
 ```
 
-## Async examples
+
+## Quickstart - Streaming
+
+The streaming interface is a simple adaptation of the event-based interface to
+make use in async code (like generators) more palatable and easier to debug.
+
+Imagine a running calculation like a mean with state. One can solve this problem
+using callbacks, but that can often lead to spaghetti code with captured
+variables all over the place.
+
+The key entrypoint for this usage is the function
+`Model[State].wait_for(property_access_function=None)`
+
+This returns an awaitable `Event[T]` which allows you to stream and sink
+calculations.
+
+A simple (incomplete) example is below. A fuller example is available in [streaming](tests/test_Stream.py).
 
 ```python
-async def myfunc(app:AppModel):
-  regional_managers = await app.wait_for(lambda state: state.regional_managers)
-  print(regional_managers)
+from soso import state
 
-asyncio.get_event_loop().create_task(myfunc(app))
-# No output yet
-app.update(regional_managers = [Person("Pam","Halpert")],
-           employees=[])
-# Output: [Person("Pam","Halpert")]
+# Step 1: define the shape of your state
+@dataclasses.dataclass
+class Mean:
+  num_periods: int = 10
+  mean: float = float("nan")
+
+@dataclasses.dataclass
+class State:
+  value: int = 0
+  mean: Mean = field(default_factory=Mean)
+  
+# Step 2: create the stateful function and take in a source/sink
+# Note that although we could have the function take a Mean as 
+# a sink, that makes the function less reusable so we separate
+# num_periods and the eventual target value
+async def mean_calc(source: state.protocols.Model[int],
+                    num_periods: state.protocols.Model[int],
+                    sink: state.protocols.Model[float]):
+  values = []
+  async for value in source.wait_for():
+    values.append(value)
+    # not enough values yet
+    if len(values) < num_periods.state:
+       continue
+    values = values[-num_periods.state:]
+    mean = sum(values)/float(len(values))
+    sink.restore(mean)
+    
+# The value comes from some other process, not
+# important for the example.
+async def value_generator(some_source: AsyncIterator[float],
+                          sink: state.protocols.Model[float]):
+  async for value in some_source:
+    sink.put(value)
+    
+# Step 3: create a model and the relevant tasks:
+model = state.build_model(State)
+
+mean = asyncio.get_event_loop().create_task(mean_calc(
+  model.submodel(lambda x: x.value),
+  model.submodel(lambda x: x.mean.num_periods),
+  model.submodel(lambda x: x.mean.mean)
+))
+
+value =  asyncio.get_event_loop().create_task(value_generator(
+  get_value_generator(), # this depends on your app
+  model.submodel(lambda x: x.value)
+))
+
+# run the task
+loop.run_until_complete(value)
 ```
+
 ## Status
 
 Although this particular library is new, multiple versions of it are
