@@ -45,6 +45,16 @@ and how they work together.
 $ python3 -m pip install git+https://github.com/sohailsomani/soso-state
 ```
 
+The entire interface is defined in two places:
+
+1. [soso.state.protocols](soso/state/protocols.py): The `Model[State]` interface
+2. `soso.state.build_model(State) -> Model[State]`
+
+Use the latter to create instances of the former. `State` should be a dataclass
+that describes the application state.
+
+Fuller examples are below.
+
 **Note**: The most up-to-date version of this code is in
 [`test_README.py`](tests/test_README.py). Feel free to check out the code and
 use the `tox` command to play around with the test.
