@@ -126,15 +126,15 @@ app.observe(lambda state: state.regional_managers,
 The streaming interface is a simple adaptation of the event-based interface to
 make use in async code (like generators) more palatable and easier to debug.
 
-Imagine a running calculation like a mean with state. One can solve this problem
+Imagine a stateful calculation like a moving average. One can solve this problem
 using callbacks, but that can often lead to spaghetti code with captured
-variables all over the place.
+variables all over the place. Instead, we prefer to write a generator which can
+yield its values.
 
 The key entrypoint for this usage is the function
 `Model[State].wait_for(property_access_function=None)`
 
-This returns an awaitable `Event[T]` which allows you to stream and sink
-calculations.
+This returns an awaitable `Event[T]` which allows you to stream changes in values.
 
 A simple (incomplete) example is below. A fuller example is available in [streaming](tests/test_Stream.py).
 
