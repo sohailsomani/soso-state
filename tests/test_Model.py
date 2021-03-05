@@ -167,7 +167,7 @@ class TestModel(unittest.TestCase):
                                lambda: Model2(NotADataClass()))
 
     def test_build_model(self) -> None:
-        model = state.build_model(State)
+        model = state.build_model(State())
         m2: state.protocols.Model[State] = model
         self.assertIsNotNone(m2)
 

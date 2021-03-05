@@ -48,7 +48,7 @@ $ python3 -m pip install git+https://github.com/sohailsomani/soso-state
 The entire interface is defined in two places:
 
 1. [soso.state.protocols](soso/state/protocols.py): The `Model[State]` interface
-2. `soso.state.build_model(State) -> Model[State]`
+2. `soso.state.build_model(initial_value:State) -> Model[State]`
 
 Use the latter to create instances of the former. `State` should be a dataclass
 that describes the application state.
@@ -77,7 +77,7 @@ class AppState:
   employees: list[Person] = field(default_factory=list)
 
 # Step 2: create the model
-app = state.build_model(AppState)
+app = state.build_model(AppState())
 
 # Update the model
 app.update(
@@ -178,7 +178,7 @@ async def value_generator(some_source: AsyncIterator[float],
     sink.put(value)
     
 # Step 3: create a model and the relevant tasks:
-model = state.build_model(State)
+model = state.build_model(State())
 
 mean = asyncio.get_event_loop().create_task(mean_calc(
   model.submodel(lambda x: x.value),

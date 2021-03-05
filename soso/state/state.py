@@ -485,5 +485,5 @@ def _get_ops(proxy: Proxy) -> typing.List[PropertyOp]:
     return proxy.__dict__['__ops']  # type:ignore
 
 
-def build_model(klass: typing.Type[StateT]) -> protocols.Model[StateT]:
-    return Model(klass())
+def build_model(initial_value: StateT) -> protocols.Model[StateT]:
+    return Model(initial_value)
