@@ -94,9 +94,14 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
     def observe(self, func: PropertyCallback[StateT, T], callback: EventCallback[T]) -> EventToken:
         event, ops = self.__event(func)
         token = event.connect(callback)
-        value = self.__get_value_for_ops(ops)
-        # call with the initial value
-        callback(value)
+        try:
+            value = self.__get_value_for_ops(ops)
+            # call with the initial value
+            callback(value)
+        # Can fail for many reasons (value doesn't exist yet is a common one),
+        # swallow but log exception
+        except Exception as e:
+            logging.getLogger(__name__).exception(e)
         return token
 
     def __event(

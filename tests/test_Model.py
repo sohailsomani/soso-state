@@ -121,9 +121,9 @@ class TestModel(unittest.TestCase):
         model = Model()
 
         mock = MagicMock()
-        # doesn't exist yet, so can't listen to it
-        self.assertRaises(KeyError,
-                          lambda: model.observe(lambda x: x.d["key"], mock))
+        # doesn't exist yet, so can't listen to it, we swallow the error, and
+        # the callback is not called
+        model.observe(lambda x: x.d["key"], mock)
         mock.assert_not_called()
 
         def update(state: State) -> None:
