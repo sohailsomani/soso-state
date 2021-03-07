@@ -1,5 +1,6 @@
 import copy
 import logging
+import math
 import traceback
 import typing
 from collections import defaultdict
@@ -399,6 +400,9 @@ class SetAttr:
     def execute(self, obj: typing.Any) -> typing.Tuple[typing.Optional[typing.Any], bool]:
         curr_value = getattr(obj, self.key)
         changed = curr_value != self.value
+        if changed and isinstance(curr_value, float):
+            # At least one should not be NaN
+            changed = not math.isnan(curr_value) or not math.isnan(self.value)
         if changed:
             setattr(obj, self.key, self.value)
         return None, changed
@@ -434,6 +438,9 @@ class SetItem:
         try:
             curr_value = obj[self.key]
             changed = curr_value != self.value
+            if changed and isinstance(curr_value, float):
+                # At least one should not be NaN
+                changed = not math.isnan(curr_value) or not math.isnan(self.value)
         except KeyError:
             changed = True
         if changed:
