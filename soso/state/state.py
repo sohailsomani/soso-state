@@ -102,7 +102,7 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
         # Can fail for many reasons (value doesn't exist yet is a common one),
         # swallow but log exception
         except Exception as e:
-            logging.getLogger(__name__).exception(e)
+            self._logger.exception(e)
         return token
 
     def __event(
@@ -182,7 +182,7 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
             except Exception:
                 # It's common for values to disappear, no need to pepper
                 # info logs. TODO: should GC such child nodes? Probably
-                logging.getLogger(__name__).debug(traceback.format_exc())
+                self._logger.debug(traceback.format_exc())
 
     @typing.overload
     def update(self, **kwargs: typing.Any) -> None:

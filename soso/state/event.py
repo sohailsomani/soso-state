@@ -21,12 +21,24 @@ class _LoggerInterface(typing.Protocol):
     def debug(self, msg: str, *args: typing.Any) -> None:
         ...
 
+    def error(self, msg: str, *args: typing.Any) -> None:
+        ...
+
+    def exception(self, msg: typing.Any, *args: typing.Any) -> None:
+        ...
+
 
 class _DummyLogger:
     def info(self, msg, *args):  # type: ignore
         pass
 
     def debug(self, msg, *args):  # type: ignore
+        pass
+
+    def error(self, msg: str, *args: typing.Any) -> None:
+        pass
+
+    def exception(self, msg: typing.Any, *args: typing.Any) -> None:
         pass
 
 
@@ -48,9 +60,8 @@ class Event(typing.Generic[T]):
             try:
                 f(__value)
             except Exception as e:
-                logger = logging.getLogger(__name__)
-                logger.error("Exception occurred when emitting event")
-                logger.exception(e)
+                self._logger.error("Exception occurred when emitting event")
+                self._logger.exception(e)
 
     def emit(self, __value: T) -> None:
         self(__value)
