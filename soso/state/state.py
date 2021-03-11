@@ -105,12 +105,40 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
             self._logger.exception(e)
         return token
 
+    def __make_proxy(self) -> StateT:
+        class Proxy:
+            def __init__(self) -> None:
+                self.__dict__['__ops'] = []
+
+            def __setattr__(self, name: str, value: typing.Any) -> None:
+                self.__dict__['__ops'].append(SetAttr(name, value))
+
+            def __getattr__(self, name: str) -> "Proxy":
+                self.__dict__['__ops'].append(GetAttr(name))
+                return self
+
+            def __setitem__(self, key: typing.Any, value: typing.Any) -> None:
+                self.__dict__['__ops'].append(SetItem(key, value))
+
+            def __getitem__(self, key: typing.Any) -> "Proxy":
+                self.__dict__['__ops'].append(GetItem(key))
+                return self
+
+            def __call__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
+                self.__dict__['__ops'].append(Call(args, kwargs))
+                return Proxy()  # type: ignore
+
+        return Proxy()  # type: ignore
+
+    def __get_ops(self, proxy: StateT) -> typing.List[PropertyOp]:
+        return proxy.__dict__['__ops']  # type: ignore
+
     def __event(
             self, func: PropertyCallback[StateT,
                                          T]) -> typing.Tuple[Event[T], typing.List[PropertyOp]]:
-        proxy: StateT = typing.cast(StateT, Proxy())
+        proxy: StateT = self.__make_proxy()
         func(proxy)
-        ops = _get_ops(proxy)  # type:ignore
+        ops = self.__get_ops(proxy)
 
         node = self.__get_node_for_ops(ops)
         return node.event, ops
@@ -155,9 +183,9 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
             self.__fire_all_child_events(self.__root, self.__current_state)
             return
 
-        proxy = typing.cast(StateT, Proxy())
+        proxy = self.__make_proxy()
         property(proxy)
-        ops = _get_ops(typing.cast(Proxy, proxy))
+        ops = self.__get_ops(proxy)
         if isinstance(ops[-1], GetAttr):
             ops[-1] = SetAttr(ops[-1].key, snapshot)
         else:
@@ -219,9 +247,9 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
             func = args[0]
 
         # Get all changes
-        proxy = Proxy()
-        func(proxy)  # type: ignore
-        ops = _get_ops(proxy)
+        proxy = self.__make_proxy()
+        func(proxy)
+        ops = self.__get_ops(proxy)
         obj: typing.Optional[typing.Any] = __submodel_root(self.__current_state)
 
         # Apply changes tos tate
@@ -252,9 +280,9 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
         self.__root.event.emit(self.__current_state)
 
         # Emit everything from actual root to __submodel_root
-        rootproxy = Proxy()
+        rootproxy = self.__make_proxy()
         __submodel_root(rootproxy)
-        rootops = _get_ops(rootproxy)
+        rootops = self.__get_ops(rootproxy)
         curr = []
         for op in rootops:
             curr.append(op)
