@@ -405,10 +405,7 @@ class _SubModel(typing.Generic[RootStateT, StateT], protocols.Model[StateT]):
         return self.__parent.observe_property(cb, callback)
 
     def update_state(self, func: StateUpdateCallback[StateT]) -> None:
-        def update(state: RootStateT) -> None:
-            return func(self.__root_property(state))
-
-        return self.__parent.update_state(update)
+        return self.__parent.update_state_root(self.__root_property, func)
 
     def update_state_root(self, root: typing.Callable[[StateT], T],
                           func: StateUpdateCallback[T]) -> None:
