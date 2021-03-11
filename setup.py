@@ -5,7 +5,12 @@ import glob
 import sys
 
 import setuptools
-from mypyc.build import mypycify
+
+try:
+    from mypyc.build import mypycify
+except ImportError:
+    mypycify = None
+
 from setuptools import Extension
 
 with open("README.md", "r", encoding="utf-8") as fh:
@@ -15,7 +20,7 @@ build_with_mypyc = "--with-mypyc" in sys.argv
 if build_with_mypyc:
     sys.argv.remove("--with-mypyc")
 
-if build_with_mypyc:
+if mypycify is not None and build_with_mypyc:
     files = glob.glob("soso/**/*.py",recursive=True)
     files = [f for f in files if f.find("__init__.py") == -1]
     ext_modules = mypycify(files)
