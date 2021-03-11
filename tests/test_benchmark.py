@@ -29,17 +29,14 @@ def test_fancy(benchmark):
     class State:
         value: int = 42
 
-    class Model(state.Model[State]):
-        pass
-
-    model = Model()
+    model = state.build_model(State())
     emitted = []
 
     def on_update(e):
         assert e == 42
         emitted.append(True)
 
-    model.observe(lambda x: x.value, on_update)
+    model.observe_property(lambda x: x.value, on_update)
 
     @benchmark
     def doit():
@@ -48,6 +45,6 @@ def test_fancy(benchmark):
         def update(state):
             state.value = 42
 
-        model.update(update)
+        model.update_state(update)
 
     assert emitted
