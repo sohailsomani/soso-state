@@ -143,19 +143,14 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
         return copy.deepcopy(subtree)
 
     def restore(self, snapshot: StateT) -> None:
-        self.restore_property(snapshot, lambda x: x)
+        self.__current_state = copy.deepcopy(snapshot)
+        self.__fire_all_child_events(self.__root_node, self.__current_state)
 
-    def restore_property(self,
-                         snapshot: typing.Union[T, StateT],
-                         property: typing.Optional[PropertyCallback[StateT, T]] = None) -> None:
-        if property is None:
-            self.__current_state = typing.cast(StateT, snapshot)
-            self.__fire_all_child_events(self.__root_node, self.__current_state)
-            return
-
+    def restore_property(self, snapshot: T, property: PropertyCallback[StateT, T]) -> None:
         proxy = self.__make_proxy()
         property(proxy)
         ops = self.__get_ops(proxy)
+        assert len(ops) > 0
         if isinstance(ops[-1], GetAttr):
             ops[-1] = SetAttr(ops[-1].key, snapshot)
         else:
