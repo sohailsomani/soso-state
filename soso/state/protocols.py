@@ -15,7 +15,7 @@ PropertyCallback = typing.Callable[[StateT_contra], T_co]
 StateUpdateCallback = typing.Callable[[StateT_contra], None]
 
 
-class Model(typing.Generic[StateT], typing.Protocol):
+class Model(typing.Protocol[StateT]):
     def observe(self, callback: EventCallback[StateT]) -> EventToken:
         ...
 
@@ -24,6 +24,11 @@ class Model(typing.Generic[StateT], typing.Protocol):
         ...
 
     def update_state(self, func: StateUpdateCallback[StateT]) -> None:
+        ...
+
+    # used by submodels
+    def update_state_root(self, root: typing.Callable[[StateT], T],
+                          func: StateUpdateCallback[T]) -> None:
         ...
 
     def update_properties(self, **kwargs: typing.Any) -> None:

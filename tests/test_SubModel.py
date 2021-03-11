@@ -24,14 +24,14 @@ class State:
     avalue: bool = False
 
 
-class RootModel(state.Model[State]):
-    pass
+def RootModel() -> state.protocols.Model[State]:
+    return state.build_model(State())
 
 
 class TestSubModel(unittest.TestCase):
     def test_simple(self) -> None:
-        root = RootModel()
-        root.update(userlist=UserList([User("willsmith", "willsmith@gmail.com")]))
+        root = state.build_model(State())
+        root.update_properties(userlist=UserList([User("willsmith", "willsmith@gmail.com")]))
         submodel = root.submodel(lambda x: x.userlist)
         test_type: state.protocols.Model[UserList] = submodel
         assert test_type is not None
@@ -42,7 +42,7 @@ class TestSubModel(unittest.TestCase):
 
     def test_propagation(self) -> None:
         root = RootModel()
-        root.update(userlist=UserList([User("willsmith", "willsmith@gmail.com")]))
+        root.update_properties(userlist=UserList([User("willsmith", "willsmith@gmail.com")]))
         rootmock = MagicMock()
         root.observe_property(lambda x: x.userlist, rootmock)
         submodel = root.submodel(lambda x: x.userlist)
@@ -71,7 +71,7 @@ class TestSubModel(unittest.TestCase):
         def update2(proxy: State) -> None:
             proxy.userlist.users = [User("unclephil", "unclephil@gmail.com")]
 
-        root.update(update2)
+        root.update_state(update2)
         submock.assert_called_with(UserList([User("unclephil", "unclephil@gmail.com")]))
 
         rootmock.assert_called_with(UserList([User("unclephil", "unclephil@gmail.com")]))

@@ -24,8 +24,8 @@ class State:
     period_30_midpoint: float = NaN
 
 
-class Model(state.Model[State]):
-    pass
+def Model() -> state.protocols.Model[State]:
+    return state.build_model(State())
 
 
 async def range_calculator(source: state.protocols.Model[float],
