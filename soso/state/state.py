@@ -5,6 +5,7 @@ import traceback
 import typing
 from collections import defaultdict
 from dataclasses import dataclass, field, is_dataclass
+from typing import ClassVar
 
 from soso.state import protocols
 from soso.state.event import (Event, EventCallback, EventToken, _DummyLogger,
@@ -52,7 +53,7 @@ class Node:
 
 
 class Model(typing.Generic[StateT], protocols.Model[StateT]):
-    _logger: _LoggerInterface = _DummyLogger()
+    _logger: ClassVar[_LoggerInterface] = _DummyLogger()
 
     def __init__(self, initial_state: typing.Optional[StateT] = None) -> None:
         model_klass = self.__orig_bases__[-1]  # type:ignore
@@ -89,10 +90,11 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
     def submodel(self, func: PropertyCallback[StateT, T]) -> protocols.Model[T]:
         return _SubModel(self, func)
 
-    def observe_root(self, callback: EventCallback[StateT]) -> EventToken:
-        return self.observe(lambda x: x, callback)
+    def observe(self, callback: EventCallback[StateT]) -> EventToken:
+        return self.observe_property(lambda x: x, callback)
 
-    def observe(self, func: PropertyCallback[StateT, T], callback: EventCallback[T]) -> EventToken:
+    def observe_property(self, func: PropertyCallback[StateT, T],
+                         callback: EventCallback[T]) -> EventToken:
         event, ops = self.__event(func)
         token = event.connect(callback)
         try:
@@ -106,28 +108,6 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
         return token
 
     def __make_proxy(self) -> StateT:
-        class Proxy:
-            def __init__(self) -> None:
-                self.__dict__['__ops'] = []
-
-            def __setattr__(self, name: str, value: typing.Any) -> None:
-                self.__dict__['__ops'].append(SetAttr(name, value))
-
-            def __getattr__(self, name: str) -> "Proxy":
-                self.__dict__['__ops'].append(GetAttr(name))
-                return self
-
-            def __setitem__(self, key: typing.Any, value: typing.Any) -> None:
-                self.__dict__['__ops'].append(SetItem(key, value))
-
-            def __getitem__(self, key: typing.Any) -> "Proxy":
-                self.__dict__['__ops'].append(GetItem(key))
-                return self
-
-            def __call__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
-                self.__dict__['__ops'].append(Call(args, kwargs))
-                return Proxy()  # type: ignore
-
         return Proxy()  # type: ignore
 
     def __get_ops(self, proxy: StateT) -> typing.List[PropertyOp]:
@@ -323,15 +303,15 @@ class _SubModel(typing.Generic[RootStateT, StateT], protocols.Model[StateT]):
         self.__model = root_model
         self.__property = root_property
 
-    def observe_root(self, callback: EventCallback[StateT]) -> EventToken:
-        return self.observe(lambda x: x, callback)
+    def observe(self, callback: EventCallback[StateT]) -> EventToken:
+        return self.observe_property(lambda x: x, callback)
 
-    def observe(self, property: PropertyCallback[StateT, T],
-                callback: EventCallback[T]) -> EventToken:
+    def observe_property(self, property: PropertyCallback[StateT, T],
+                         callback: EventCallback[T]) -> EventToken:
         def propfunc(root: RootStateT) -> T:
             return property(self.__property(root))
 
-        return self.__model.observe(propfunc, callback)
+        return self.__model.observe_property(propfunc, callback)
 
     @property
     def state(self) -> StateT:
@@ -349,49 +329,27 @@ class _SubModel(typing.Generic[RootStateT, StateT], protocols.Model[StateT]):
             assert property is not None
             return property(self.__property(root))
 
-        return self.__model.wait_for(propfunc)
+        return self.__model.wait_for_property(propfunc)
 
-    @typing.overload
-    def snapshot(self) -> StateT:
-        ...
+    def snapshot_property(self, property: PropertyCallback[StateT, T]) -> T:
+        def propfunc(root: RootStateT) -> T:
+            return property(self.__property(root))
 
-    @typing.overload
-    def snapshot(self, property: PropertyCallback[StateT, T]) -> T:
-        ...
+        return self.__model.snapshot_property(propfunc)
 
-    def snapshot(
-            self,
-            property: typing.Optional[PropertyCallback[StateT,
-                                                       T]] = None) -> typing.Union[StateT, T]:
-        def propfunc(root: RootStateT) -> typing.Union[StateT, T]:
-            if property is None:
-                return self.__property(root)
-            else:
-                return property(self.__property(root))
+    def restore_property(self, snapshot: T, property: PropertyCallback[StateT, T]) -> None:
+        def propfunc(root: RootStateT) -> T:
+            return property(self.__property(root))
 
-        return self.__model.snapshot(propfunc)
+        return self.__model.restore_property(snapshot, propfunc)
 
-    def restore(self,
-                snapshot: typing.Union[StateT, T],
-                property: typing.Optional[PropertyCallback[StateT, T]] = None) -> None:
-        def propfunc(root: RootStateT) -> typing.Union[StateT, T]:
-            if property is None:
-                return self.__property(root)
-            else:
-                return property(self.__property(root))
+    def update_properties(self, **kwargs: typing.Any) -> None:
+        self.__model.update_properties(__submodel_root=self.__property, **kwargs)
 
-        return self.__model.restore(snapshot, propfunc)
-
-    @typing.overload
-    def update(self, **kwargs: typing.Any) -> None:
-        ...
-
-    @typing.overload
-    def update(self, property: StateUpdateCallback[StateT]) -> None:
-        ...
-
-    def update(self, *args: StateUpdateCallback[StateT], **kwargs: typing.Any) -> None:
-        self.__model.update(*args, __submodel_root=self.__property, **kwargs)
+    def update_state(self, func: StateUpdateCallback[StateT]) -> None:
+        def update_state(root: RootStateT) -> None:
+            func(self.__property(root))
+        self.__model.update_state(update_state)
 
     def submodel(self, property: PropertyCallback[StateT, T]) -> protocols.Model[T]:
         def func(x: RootStateT) -> T:

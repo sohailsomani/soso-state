@@ -33,7 +33,12 @@ async def range_calculator(source: state.protocols.Model[float],
                                                                     float]],
                            n: int) -> None:
     values = []
-    async for value in source.wait_for():
+    it = source.wait_for().__aiter__()
+    while True:
+        try:
+            value = await it.__anext__()
+        except StopAsyncIteration:
+            break
         values.append(value)
         values = values[-n:]
         if len(values) < n:
@@ -69,8 +74,8 @@ class TestStream(unittest.TestCase):
                               n=30)
 
         values = []
-        model.observe(lambda x: x.sensor_value,
-                      lambda value: values.append(value))
+        model.observe_property(lambda x: x.sensor_value,
+                               lambda value: values.append(value))
         # drop the NaN
         values.clear()
 

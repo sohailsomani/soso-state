@@ -47,7 +47,7 @@ class Event(typing.Generic[T]):
         self._name = name
         self._handlers: typing.List[typing.Tuple["EventToken", EventCallback[T]]] = []
 
-    _logger: _LoggerInterface = _DummyLogger()
+    _logger: typing.ClassVar[_LoggerInterface] = _DummyLogger()
 
     @staticmethod
     def _initialize_logging() -> None:

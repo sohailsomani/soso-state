@@ -16,48 +16,39 @@ StateUpdateCallback = typing.Callable[[StateT_contra], None]
 
 
 class Model(typing.Generic[StateT], typing.Protocol):
-    def observe_root(self, callback: EventCallback[StateT]) -> EventToken:
+    def observe(self, callback: EventCallback[StateT]) -> EventToken:
         ...
 
-    def observe(self, property: typing.Callable[[StateT], T],
-                callback: EventCallback[T]) -> EventToken:
+    def observe_property(self, property: typing.Callable[[StateT], T],
+                         callback: EventCallback[T]) -> EventToken:
         ...
 
-    @typing.overload
-    def update(self, **kwargs: typing.Any) -> None:
+    def update_state(self, func: StateUpdateCallback[StateT]) -> None:
         ...
 
-    @typing.overload
-    def update(self, func: StateUpdateCallback[StateT]) -> None:
+    def update_properties(self, **kwargs: typing.Any) -> None:
         ...
 
     @property
     def state(self) -> StateT:
         ...
 
-    @typing.overload
-    def wait_for(self, property: typing.Callable[[StateT], T]) -> Event[T]:
-        ...
-
-    @typing.overload
     def wait_for(self) -> Event[StateT]:
         ...
 
-    @typing.overload
+    def wait_for_property(self, property: typing.Callable[[StateT], T]) -> Event[T]:
+        ...
+
     def snapshot(self) -> StateT:
         ...
 
-    @typing.overload
-    def snapshot(self, property: typing.Callable[[StateT], T]) -> T:
+    def snapshot_property(self, property: typing.Callable[[StateT], T]) -> T:
         ...
 
-    @typing.overload
     def restore(self, snapshot: StateT) -> None:
         ...
 
-    @typing.overload
-    def restore(self, snapshot: T, property: typing.Callable[[StateT],
-                                                             T]) -> None:
+    def restore_property(self, snapshot: T, property: typing.Callable[[StateT], T]) -> None:
         ...
 
     def submodel(self, property: typing.Callable[[StateT], T]) -> "Model[T]":
