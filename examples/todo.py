@@ -27,6 +27,8 @@ class TodoAppState:
 class TodoAppModel(state.Model[TodoAppState]):
     def __init__(self) -> None:
         super().__init__(TodoAppState())
+        self.load(".todos")
+        self.observe(lambda _: self.save(".todos"))
 
     def add_todo(self, text: str) -> None:
         assert text
@@ -90,9 +92,7 @@ class UI(tk.Frame):
 
 
 model = TodoAppModel()
-model.load('.todos')
 
 ui = UI(model)
 ui.run()
 
-model.save('.todos')
