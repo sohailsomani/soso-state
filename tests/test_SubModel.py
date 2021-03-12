@@ -24,7 +24,7 @@ class State:
     avalue: bool = False
 
 
-def RootModel() -> state.protocols.Model[State]: # noqa
+def RootModel() -> state.protocols.Model[State]:  # noqa
     return state.build_model(State())
 
 
@@ -91,6 +91,34 @@ class TestSubModel(unittest.TestCase):
             proxy.anumber = 5
 
         sub.update_state(update)
+        mock1.assert_called_with([User("willsmith", "willsmith@gmail.com")])
+        mock2.assert_called_with(5)
+
+    def test_observe(self) -> None:
+        root = RootModel()
+        sub = root.submodel(lambda x: x.userlist)
+        mock = MagicMock()
+        sub.observe(mock)
+        mock.reset_mock()
+
+        def update(proxy: UserList) -> None:
+            proxy.users = [User("willsmith", "willsmith@gmail.com")]
+            proxy.anumber = 5
+
+        sub.update_state(update)
+        mock.assert_called_with(
+            UserList(users=[User("willsmith", "willsmith@gmail.com")], anumber=5))
+
+    def test_update_properties(self) -> None:
+        root = RootModel()
+        sub: state.protocols.Model[UserList] = root.submodel(lambda x: x.userlist)
+        mock1 = MagicMock()
+        mock2 = MagicMock()
+        sub.observe_property(lambda x: x.users, mock1)
+        sub.observe_property(lambda x: x.anumber, mock2)
+
+        sub.update_properties(users=[User("willsmith", "willsmith@gmail.com")], anumber=5)
+
         mock1.assert_called_with([User("willsmith", "willsmith@gmail.com")])
         mock2.assert_called_with(5)
 
