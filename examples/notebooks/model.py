@@ -1,4 +1,5 @@
 import datetime as dt
+import math
 import typing
 from dataclasses import dataclass, field
 
@@ -62,12 +63,12 @@ def _init_gbm_generator(ticker_model: state.protocols.Model[str],
             o = h = low = c = np.nan
             for minute in range(60):
                 st = generate_value()
-                if np.isnan(o):
+                if math.isnan(o):
                     o = st
                 c = st
-                if np.isnan(h):
+                if math.isnan(h):
                     h = st
-                if np.isnan(low):
+                if math.isnan(low):
                     low = st
                 h = max(h, st)
                 low = min(low, st)
