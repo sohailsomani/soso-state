@@ -1,6 +1,5 @@
 import typing
 
-import pandas as pd
 import plotly.graph_objects as go
 from examples.notebooks import model
 from ipywidgets.widgets import Dropdown, VBox

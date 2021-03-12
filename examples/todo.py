@@ -72,8 +72,7 @@ class UI(tk.Frame):
         self.pack()
 
         x: TodoAppState
-        self.__model.observe_property(lambda x: x.todos,
-                                      lambda todos: self.__update_listbox(todos))
+        self.__model.observe_property(lambda x: x.todos, lambda todos: self.__update_listbox(todos))
 
     def __update_listbox(self, todos: typing.List[Todo]) -> None:
         t: Todo
@@ -95,4 +94,3 @@ model = TodoAppModel()
 
 ui = UI(model)
 ui.run()
-
