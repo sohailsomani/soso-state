@@ -10,3 +10,4 @@ prof
 venv
 .ipynb_checkpoints
 build
+.pytest_cache

@@ -168,12 +168,12 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
                       func: StateUpdateCallback[T]) -> None:
 
         # Get all changes
-        proxy = self.__make_proxy()
-        func(root(proxy))
-        ops = self.__get_ops(proxy)
+        tproxy = self.__make_proxy()
+        func(tproxy)  # type: ignore
+        ops = self.__get_ops(tproxy)
         obj: typing.Optional[typing.Any] = root(self.__current_state)
 
-        # Apply changes tos tate
+        # Apply changes to state
         stmts: typing.List[typing.List[PropertyOp]] = []
         curr_stmt: typing.List[PropertyOp] = []
         self._logger.debug("Update ops: %s", ops)
@@ -200,31 +200,34 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
         # Always emit root
         self.__root_node.event.emit(self.__current_state)
 
-        # Emit everything from actual root to __submodel_root
         rootproxy = self.__make_proxy()
         root(rootproxy)
         rootops = self.__get_ops(rootproxy)
-        curr = []
-        for op in rootops:
-            curr.append(op)
-            node = self.__get_node_for_ops(curr)
-            value = self.__get_value_for_ops(curr)
-            node.event.emit(value)
 
+        # Emit everything from actual root to root(__current_state)
+        curr_node = self.__root_node
+        curr_value: typing.Any = self.__current_state
+        for op in rootops:
+            curr_node = curr_node.children[op.key]
+            curr_value = op.get_value(curr_value)
+            curr_node.event.emit(curr_value)
+
+        root_node = curr_node
+        root_value = curr_value
         # Now emit the fields that were actually modified
         for stmt in stmts:
             assert stmt
             # if foo.bar.baz[0] is modified then we need to signal foo,
             # foo.bar, foo.bar, foo.bar.baz[0], and then everything
             # below foo.bar.baz[0]
-            curr = []
+            curr_node = root_node
+            curr_value = root_value
             for op in stmt:
-                curr.append(op)
-                node = self.__get_node_for_ops(curr)
-                value = self.__get_value_for_ops(curr)
-                node.event.emit(value)
+                curr_node = curr_node.children[op.key]
+                curr_value = op.get_value(curr_value)
+                curr_node.event.emit(curr_value)
             # Now everything below node
-            self.__fire_all_child_events(node, value)
+            self.__fire_all_child_events(curr_node, curr_value)
 
     def __make_proxy(self) -> StateT:
         return Proxy()  # type: ignore
