@@ -230,38 +230,15 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
             self.__fire_all_child_events(curr_node, curr_value)
 
     def __make_proxy(self) -> StateT:
-        output_list: typing.List[PropertyOp] = []
-
-        class Proxy:
-            def __init__(self) -> None:
-                self.__dict__['__output_list'] = output_list
-
-            def __setattr__(self, name: str, value: typing.Any) -> None:
-                output_list.append(SetAttr(name, value))
-
-            def __getattr__(self, name: str) -> "Proxy":
-                output_list.append(GetAttr(name))
-                return self
-
-            def __setitem__(self, key: typing.Any, value: typing.Any) -> None:
-                output_list.append(SetItem(key, value))
-
-            def __getitem__(self, key: typing.Any) -> "Proxy":
-                output_list.append(GetItem(key))
-                return self
-
-            def __call__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
-                output_list.append(Call(args, kwargs))
-
         return Proxy()  # type: ignore
 
-    def __get_ops(self, proxy: StateT) -> typing.List[PropertyOp]:
-        return proxy.__dict__['__output_list']  # type: ignore
+    def __get_ops(self, proxy: T) -> typing.List[PropertyOp]:
+        return proxy.__dict__['__ops']  # type: ignore
 
     def __event(
             self, func: PropertyCallback[StateT,
                                          T]) -> typing.Tuple[Event[T], typing.List[PropertyOp]]:
-        proxy = self.__make_proxy()
+        proxy: StateT = self.__make_proxy()
         func(proxy)
         ops = self.__get_ops(proxy)
 
@@ -382,6 +359,32 @@ class Call:
 
     def get_value(self, obj: typing.Any) -> typing.Any:
         return obj.__call__
+
+
+class Proxy:
+    def __init__(self) -> None:
+        self.__dict__['__ops'] = []
+
+    def __setattr__(self, name: str, value: typing.Any) -> None:
+        self.__dict__['__ops'].append(SetAttr(name, value))
+
+    def __getattr__(self, name: str) -> "Proxy":
+        self.__dict__['__ops'].append(GetAttr(name))
+        return self
+
+    def __setitem__(self, key: typing.Any, value: typing.Any) -> None:
+        self.__dict__['__ops'].append(SetItem(key, value))
+
+    def __getitem__(self, key: typing.Any) -> "Proxy":
+        self.__dict__['__ops'].append(GetItem(key))
+        return self
+
+    def __call__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
+        self.__dict__['__ops'].append(Call(args, kwargs))
+
+
+def _get_ops(proxy: Proxy) -> typing.List[PropertyOp]:
+    return proxy.__dict__['__ops']  # type:ignore
 
 
 def build_model(initial_value: StateT) -> protocols.Model[StateT]:
