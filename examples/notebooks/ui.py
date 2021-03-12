@@ -15,11 +15,11 @@ class Chart(go.FigureWidget):  # type: ignore
         self.__model = m
         m.observe_property(lambda x: x.bars, self.__bars_updated)
 
-    def __bars_updated(self, bars: pd.DataFrame) -> None:
+    def __bars_updated(self, bars: model.Bars) -> None:
         with self.batch_update():
             self.update(layout_title=self.__model.state.selected_ticker)
             data = self.data[0]
-            data.x = bars.index
+            data.x = bars.date
             data.open = bars.open
             data.high = bars.high
             data.low = bars.low
