@@ -13,7 +13,7 @@ class State:
     lst: typing.List[int] = field(default_factory=list)
 
 
-def Model(s: State = State()) -> state.protocols.Model[State]:
+def Model(s: State = State()) -> state.protocols.Model[State]: # noqa
     return state.build_model(s)
 
 
@@ -21,7 +21,7 @@ class NotADataClass:
     pass
 
 
-def Model2() -> state.protocols.Model[NotADataClass]:
+def Model2() -> state.protocols.Model[NotADataClass]: # noqa
     return state.build_model(NotADataClass())
 
 

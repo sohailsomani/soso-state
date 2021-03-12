@@ -1,5 +1,4 @@
--e ../mypy
-# mypy >= 0.800
+mypy >= 0.800
 pytest
 pytest-benchmark
 pytest-cov

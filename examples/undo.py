@@ -66,14 +66,14 @@ def make_undoable(
         finally:
             undo.is_active = False
 
-    model.observe(prop, on_state_update)
+    model.observe_property(prop, on_state_update)
 
     return on_do_undo
 
 
 class TodoAppModel(state.Model[TodoAppState]):
     def __init__(self) -> None:
-        super().__init__()
+        super().__init__(TodoAppState())
         # Ensure we load any state before we make it undoable, otherwise the
         # initial "current" state will be empty
         self.load('.todos')
@@ -86,7 +86,7 @@ class TodoAppModel(state.Model[TodoAppState]):
     def add_todo(self, text: str) -> None:
         assert text
         todo = Todo(description=text)
-        self.update(todos=self.state.todos + [todo])
+        self.update_properties(todos=self.state.todos + [todo])
 
     def save(self, filename: str) -> None:
         with open(filename, 'wb') as f:
@@ -129,8 +129,8 @@ class UI(tk.Frame):
         self.pack()
 
         x: TodoAppState
-        self.__model.observe(lambda x: x.todos,
-                             lambda todos: self.__update_listbox(todos))
+        self.__model.observe_property(lambda x: x.todos,
+                                      lambda todos: self.__update_listbox(todos))
 
     def __update_listbox(self, todos: typing.List[Todo]) -> None:
         t: Todo

@@ -24,7 +24,7 @@ class State:
     period_30_midpoint: float = NaN
 
 
-def Model() -> state.protocols.Model[State]:
+def Model() -> state.protocols.Model[State]: # noqa
     return state.build_model(State())
 
 

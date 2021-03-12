@@ -13,7 +13,7 @@ class Chart(go.FigureWidget):  # type: ignore
         super().__init__(data=go.Ohlc(), **kw)
         self.update(layout_xaxis_rangeslider_visible=False)
         self.__model = m
-        m.observe(lambda x: x.bars, self.__bars_updated)
+        m.observe_property(lambda x: x.bars, self.__bars_updated)
 
     def __bars_updated(self, bars: pd.DataFrame) -> None:
         with self.batch_update():
@@ -34,7 +34,7 @@ def bind_dropdown(  # type: ignore
     def update_options(options: typing.List[state.T]) -> None:
         dropdown.options = [str(s) for s in options]
 
-    options.observe(lambda x: x, update_options)
+    options.observe(update_options)
 
     def update_target(newvalue: typing.Any) -> None:
         target.restore(options.state[newvalue['new']])

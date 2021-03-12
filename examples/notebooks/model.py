@@ -25,7 +25,7 @@ class State:
 
 class Model(state.Model[State]):
     def __init__(self) -> None:
-        super().__init__()
+        super().__init__(State())
         _init_gbm_generator(
             self.submodel(lambda x: x.chart.selected_ticker),
             self.submodel(lambda x: x.chart.bars)
@@ -80,4 +80,4 @@ def _init_gbm_generator(
 
         bars_model.restore(df)
 
-    ticker_model.observe(lambda x: x, lambda ticker: generate_data(ticker))
+    ticker_model.observe(lambda ticker: generate_data(ticker))

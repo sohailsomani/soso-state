@@ -24,7 +24,7 @@ class State:
     avalue: bool = False
 
 
-def RootModel() -> state.protocols.Model[State]:
+def RootModel() -> state.protocols.Model[State]: # noqa
     return state.build_model(State())
 
 

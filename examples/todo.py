@@ -25,10 +25,13 @@ class TodoAppState:
 
 # Step 2: Create a model which holds and manipulates the state.
 class TodoAppModel(state.Model[TodoAppState]):
+    def __init__(self) -> None:
+        super().__init__(TodoAppState())
+
     def add_todo(self, text: str) -> None:
         assert text
         todo = Todo(description=text)
-        self.update(todos=self.state.todos + [todo])
+        self.update_properties(todos=self.state.todos + [todo])
 
     def save(self, filename: str) -> None:
         with open(filename, 'wb') as f:
@@ -67,8 +70,8 @@ class UI(tk.Frame):
         self.pack()
 
         x: TodoAppState
-        self.__model.observe(lambda x: x.todos,
-                             lambda todos: self.__update_listbox(todos))
+        self.__model.observe_property(lambda x: x.todos,
+                                      lambda todos: self.__update_listbox(todos))
 
     def __update_listbox(self, todos: typing.List[Todo]) -> None:
         t: Todo
