@@ -2,9 +2,11 @@
 # type: ignore
 
 import glob
+import subprocess
 import sys
 
 import setuptools
+
 
 try:
     from mypyc.build import mypycify
@@ -18,6 +20,8 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 build_with_mypyc = "--with-mypyc" in sys.argv
 if build_with_mypyc:
+    version = subprocess.check_output(['mypyc','--version'])
+    print("mypyc:",version)
     sys.argv.remove("--with-mypyc")
 
 if mypycify is not None and build_with_mypyc:

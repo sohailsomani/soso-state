@@ -1,6 +1,5 @@
 import copy
 import logging
-import math
 import traceback
 import typing
 from collections import defaultdict
@@ -10,6 +9,8 @@ from typing import ClassVar
 from soso.state import protocols
 from soso.state.event import (Event, EventCallback, EventToken, _DummyLogger,
                               _LoggerInterface)
+from soso.state.util import (GetAttr, GetItem, PropertyOp, Proxy, SetAttr,
+                             SetItem, _get_ops)
 
 __all__ = ['Model', 'StateT', 'T', 'PropertyCallback', 'build_model', 'initialize_logging']
 
@@ -27,21 +28,6 @@ StateUpdateCallback = typing.Callable[[StateT_contra], None]
 def initialize_logging() -> None:
     Model._logger = logging.getLogger(__name__)
     Event._initialize_logging()
-
-
-class PropertyOp(typing.Protocol):
-    @property
-    def key(self) -> typing.Any:
-        ...
-
-    def execute(self, obj: typing.Any) -> typing.Tuple[typing.Optional[typing.Any], bool]:
-        ...
-
-    def execute_raw(self, obj: typing.Any) -> typing.Optional[typing.Any]:
-        ...
-
-    def get_value(self, obj: typing.Any) -> typing.Optional[typing.Any]:
-        ...
 
 
 @dataclass
@@ -169,7 +155,7 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
 
         # Get all changes
         tproxy = self.__make_proxy()
-        func(tproxy)  # type: ignore
+        func(tproxy)
         ops = self.__get_ops(tproxy)
         obj: typing.Optional[typing.Any] = root(self.__current_state)
 
@@ -229,16 +215,16 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
             # Now everything below node
             self.__fire_all_child_events(curr_node, curr_value)
 
-    def __make_proxy(self) -> StateT:
-        return Proxy()  # type: ignore
+    def __make_proxy(self) -> typing.Any:
+        return Proxy()
 
-    def __get_ops(self, proxy: T) -> typing.List[PropertyOp]:
-        return proxy.__dict__['__ops']  # type: ignore
+    def __get_ops(self, proxy: typing.Any) -> typing.List[PropertyOp]:
+        return _get_ops(proxy)
 
     def __event(
             self, func: PropertyCallback[StateT,
                                          T]) -> typing.Tuple[Event[T], typing.List[PropertyOp]]:
-        proxy: StateT = self.__make_proxy()
+        proxy = self.__make_proxy()
         func(proxy)
         ops = self.__get_ops(proxy)
 
@@ -266,125 +252,6 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
 
     def __repr__(self) -> str:
         return str(self)
-
-
-@dataclass
-class GetAttr:
-    key: typing.Any
-
-    def execute(self, obj: typing.Any) -> typing.Tuple[typing.Optional[typing.Any], bool]:
-        return getattr(obj, self.key), False
-
-    def execute_raw(self, obj: typing.Any) -> typing.Optional[typing.Any]:
-        return getattr(obj, self.key)
-
-    def get_value(self, obj: typing.Any) -> typing.Optional[typing.Any]:
-        return getattr(obj, self.key)
-
-
-@dataclass
-class SetAttr:
-    key: typing.Any
-    value: typing.Any
-
-    def execute(self, obj: typing.Any) -> typing.Tuple[typing.Optional[typing.Any], bool]:
-        curr_value = getattr(obj, self.key)
-        changed = curr_value != self.value
-        if changed and isinstance(curr_value, float):
-            # At least one should not be NaN
-            changed = not math.isnan(curr_value) or not math.isnan(self.value)
-        if changed:
-            setattr(obj, self.key, self.value)
-        return None, changed
-
-    def execute_raw(self, obj: typing.Any) -> typing.Optional[typing.Any]:
-        setattr(obj, self.key, self.value)
-        return None
-
-    def get_value(self, obj: typing.Any) -> typing.Optional[typing.Any]:
-        return getattr(obj, self.key)
-
-
-@dataclass
-class GetItem:
-    key: typing.Any
-
-    def execute(self, obj: typing.Any) -> typing.Tuple[typing.Optional[typing.Any], bool]:
-        return obj[self.key], False
-
-    def execute_raw(self, obj: typing.Any) -> typing.Optional[typing.Any]:
-        return obj[self.key]
-
-    def get_value(self, obj: typing.Any) -> typing.Optional[typing.Any]:
-        return obj[self.key]
-
-
-@dataclass
-class SetItem:
-    key: typing.Any
-    value: typing.Any
-
-    def execute(self, obj: typing.Any) -> typing.Tuple[typing.Optional[typing.Any], bool]:
-        try:
-            curr_value = obj[self.key]
-            changed = curr_value != self.value
-            if changed and isinstance(curr_value, float):
-                # At least one should not be NaN
-                changed = not math.isnan(curr_value) or not math.isnan(self.value)
-        except KeyError:
-            changed = True
-        if changed:
-            obj[self.key] = self.value
-        return None, changed
-
-    def execute_raw(self, obj: typing.Any) -> typing.Optional[typing.Any]:
-        obj[self.key] = self.value
-        return None
-
-    def get_value(self, obj: typing.Any) -> typing.Any:
-        return obj[self.key]
-
-
-@dataclass
-class Call:
-    args: typing.Tuple[typing.Any, ...]
-    kwargs: typing.Dict[str, typing.Any]
-    key: str = '__call__'
-
-    def execute(self, obj: typing.Any) -> typing.Tuple[typing.Optional[typing.Any], bool]:
-        return obj(*self.args, **self.kwargs), True
-
-    def execute_raw(self, obj: typing.Any) -> typing.Optional[typing.Any]:
-        return obj(*self.args, **self.kwargs)
-
-    def get_value(self, obj: typing.Any) -> typing.Any:
-        return obj.__call__
-
-
-class Proxy:
-    def __init__(self) -> None:
-        self.__dict__['__ops'] = []
-
-    def __setattr__(self, name: str, value: typing.Any) -> None:
-        self.__dict__['__ops'].append(SetAttr(name, value))
-
-    def __getattr__(self, name: str) -> "Proxy":
-        self.__dict__['__ops'].append(GetAttr(name))
-        return self
-
-    def __setitem__(self, key: typing.Any, value: typing.Any) -> None:
-        self.__dict__['__ops'].append(SetItem(key, value))
-
-    def __getitem__(self, key: typing.Any) -> "Proxy":
-        self.__dict__['__ops'].append(GetItem(key))
-        return self
-
-    def __call__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
-        self.__dict__['__ops'].append(Call(args, kwargs))
-
-
-def _get_ops(proxy: Proxy) -> typing.List[PropertyOp]:
-    return proxy.__dict__['__ops']  # type:ignore
 
 
 def build_model(initial_value: StateT) -> protocols.Model[StateT]:

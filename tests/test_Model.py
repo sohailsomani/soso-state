@@ -84,16 +84,6 @@ class TestModel(unittest.TestCase):
         mock.assert_called_with("goodbye")
         mock.assert_called_once()
 
-    def test_bad_update(self) -> None:
-        model = state.build_model(State())
-
-        def update(x: State) -> None:
-            # don't assign, but read
-            x.value
-
-        if __debug__:
-            self.assertRaises(AssertionError, lambda: model.update_state(update))
-
     def test_root_changes(self) -> None:
         model = Model()
         mock = MagicMock()
