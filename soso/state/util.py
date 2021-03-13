@@ -71,28 +71,34 @@ def delta(base: typing.Any,
 
 class Proxy:
     def __init__(self) -> None:
-        self.__dict__['__ops'] = []
+        self._proxy_ops: typing.List[PropertyOp] = []
 
     def __setattr__(self, name: str, value: typing.Any) -> None:
-        self.__dict__['__ops'].append(SetAttr(name, value))
+        if name == '_proxy_ops':
+            super().__setattr__(name, value)
+        else:
+            self._proxy_ops.append(SetAttr(name, value))
 
-    def __getattr__(self, name: str) -> "Proxy":
-        self.__dict__['__ops'].append(GetAttr(name))
-        return self
+    def __getattr__(self, name: str) -> typing.Any:
+        if name == '_proxy_ops':
+            super().__getattribute__(name)
+        else:
+            self._proxy_ops.append(GetAttr(name))
+            return self
 
     def __setitem__(self, key: typing.Any, value: typing.Any) -> None:
-        self.__dict__['__ops'].append(SetItem(key, value))
+        self._proxy_ops.append(SetItem(key, value))
 
     def __getitem__(self, key: typing.Any) -> "Proxy":
-        self.__dict__['__ops'].append(GetItem(key))
+        self._proxy_ops.append(GetItem(key))
         return self
 
     def __call__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
-        self.__dict__['__ops'].append(Call(args, kwargs))
+        self._proxy_ops.append(Call(args, kwargs))
 
 
 def _get_ops(proxy: Proxy) -> typing.List[PropertyOp]:
-    return proxy.__dict__['__ops']  # type: ignore
+    return proxy._proxy_ops
 
 
 @dataclass
