@@ -13,7 +13,7 @@ class State:
     lst: typing.List[int] = field(default_factory=list)
 
 
-def Model(s: State = State()) -> state.protocols.Model[State]: # noqa
+def Model(s: State = State()) -> state.protocols.Model[State]:  # noqa
     return state.build_model(s)
 
 
@@ -21,11 +21,22 @@ class NotADataClass:
     pass
 
 
-def Model2() -> state.protocols.Model[NotADataClass]: # noqa
+def Model2() -> state.protocols.Model[NotADataClass]:  # noqa
     return state.build_model(NotADataClass())
 
 
 class TestModel(unittest.TestCase):
+    def test_no_change_no_callback(self) -> None:
+        model = Model()
+        mock = MagicMock()
+
+        model.observe_property(lambda x: x.value, mock)
+        mock.assert_called_with(0)
+        mock.reset_mock()
+
+        model.update_properties(value=0)
+        mock.assert_not_called()
+
     def test_snapshot(self) -> None:
         model = Model()
         mock = MagicMock()
