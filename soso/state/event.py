@@ -15,30 +15,30 @@ class EventCallback(typing.Generic[T_contra], typing.Protocol):
 
 
 class _LoggerInterface(typing.Protocol):
-    def info(self, msg: str, *args: typing.Any) -> None:
+    def info(self, msg: str, *args: typing.Any, **kwargs: typing.Any) -> None:
         ...
 
-    def debug(self, msg: str, *args: typing.Any) -> None:
+    def debug(self, msg: str, *args: typing.Any, **kwargs: typing.Any) -> None:
         ...
 
-    def error(self, msg: str, *args: typing.Any) -> None:
+    def error(self, msg: str, *args: typing.Any, **kwargs: typing.Any) -> None:
         ...
 
-    def exception(self, msg: typing.Any, *args: typing.Any) -> None:
+    def exception(self, msg: typing.Any, *args: typing.Any, **kwargs: typing.Any) -> None:
         ...
 
 
 class _DummyLogger:
-    def info(self, msg, *args):  # type: ignore
+    def info(self, msg, *args, **kwargs):  # type: ignore
         pass
 
-    def debug(self, msg, *args):  # type: ignore
+    def debug(self, msg, *args, **kwargs):  # type: ignore
         pass
 
-    def error(self, msg: str, *args: typing.Any) -> None:
+    def error(self, msg: str, *args: typing.Any, **kwargs: typing.Any) -> None:
         pass
 
-    def exception(self, msg: typing.Any, *args: typing.Any) -> None:
+    def exception(self, msg: typing.Any, *args: typing.Any, **kwargs: typing.Any) -> None:
         pass
 
 

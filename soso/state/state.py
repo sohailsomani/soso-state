@@ -7,10 +7,8 @@ from dataclasses import dataclass, field, is_dataclass
 from typing import ClassVar
 
 from soso.state import protocols
-from soso.state.event import (Event, EventCallback, EventToken, _DummyLogger,
-                              _LoggerInterface)
-from soso.state.util import (GetAttr, GetItem, PropertyOp, Proxy, SetAttr,
-                             SetItem, _get_ops)
+from soso.state.event import (Event, EventCallback, EventToken, _DummyLogger, _LoggerInterface)
+from soso.state.util import (GetAttr, GetItem, PropertyOp, Proxy, SetAttr, SetItem, _get_ops)
 
 __all__ = ['Model', 'StateT', 'T', 'PropertyCallback', 'build_model', 'initialize_logging']
 
@@ -82,8 +80,8 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
             callback(value)
         # Can fail for many reasons (value doesn't exist yet is a common one),
         # swallow but log exception
-        except Exception as e:
-            self._logger.exception(e)
+        except Exception:
+            self._logger.debug("Exception during callback", exc_info=True)
         return token
 
     def _get_submodel_root(self) -> typing.Callable[[StateT], typing.Any]:
