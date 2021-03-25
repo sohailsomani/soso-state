@@ -193,6 +193,7 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
         curr_value: typing.Any = self.__current_state
         for op in rootops:
             curr_node = curr_node.children[op.key]
+            curr_node.op = op
             curr_value = op.get_value(curr_value)
             curr_node.event.emit(curr_value)
 
@@ -208,6 +209,7 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
             curr_value = root_value
             for op in stmt:
                 curr_node = curr_node.children[op.key]
+                curr_node.op = op
                 curr_value = op.get_value(curr_value)
                 curr_node.event.emit(curr_value)
             # Now everything below node
