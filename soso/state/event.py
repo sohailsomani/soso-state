@@ -108,9 +108,15 @@ class Event(typing.Generic[T]):
         finally:
             token.disconnect()
 
-    def sample(self, timer: "Event[None]") -> "Event[T]":
+    def sample(self, timer_in: typing.Union["Event[None]", dt.timedelta]) -> "Event[T]":
         event: Event[T] = Event(self._name + "::sample")
         last_value: typing.Optional[T] = None
+
+        timer: Event[None]
+        if isinstance(timer_in, dt.timedelta):
+            timer = TimerEvent(self._name + "::timer", timer_in)
+        else:
+            timer = timer_in
 
         def event_callback(arg: T) -> None:
             nonlocal last_value
