@@ -1,4 +1,5 @@
 import asyncio
+import datetime as dt
 import logging
 import typing
 import weakref
@@ -106,6 +107,37 @@ class Event(typing.Generic[T]):
                 yield value
         finally:
             token.disconnect()
+
+    def sample(self, timer: "Event[None]") -> "Event[T]":
+        event: Event[T] = Event(self._name + "::sample")
+        last_value: typing.Optional[T] = None
+
+        def event_callback(arg: T) -> None:
+            nonlocal last_value
+            last_value = arg
+
+        def timer_callback(*a: typing.Any) -> None:
+            nonlocal last_value
+            if last_value is not None:
+                to_emit = last_value
+                last_value = None
+                event.emit(to_emit)
+
+        self.connect(event_callback)
+        timer.connect(timer_callback)
+
+        return event
+
+
+class TimerEvent(Event[None]):
+    def __init__(self, name: str, interval: dt.timedelta) -> None:
+        super().__init__(name, type(None))
+
+        def callback() -> None:
+            asyncio.get_event_loop().call_later(interval.total_seconds(), callback)
+            self.emit(None)
+
+        asyncio.get_event_loop().call_later(interval.total_seconds(), callback)
 
 
 class EventToken:
