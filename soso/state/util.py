@@ -123,7 +123,7 @@ class SetAttr:
     def execute(self, obj: typing.Any) -> typing.Tuple[typing.Optional[typing.Any], bool]:
         curr_value = getattr(obj, self.key)
         changed = curr_value != self.value
-        if changed and isinstance(curr_value, float):
+        if changed and isinstance(curr_value, float) and isinstance(self.value, float):
             # At least one should not be NaN
             changed = not math.isnan(curr_value) or not math.isnan(self.value)
         if changed:
