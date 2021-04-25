@@ -47,6 +47,12 @@ class TestEvent(unittest.TestCase):
         timer.emit(None)
         mock.assert_called()
 
+    async def __emit_continuous(self, event: Event[int], start_value: int) -> None:
+        while True:
+            event.emit(start_value)
+            start_value += 1
+            await asyncio.sleep(0.01)
+
     def test_sample_ergonomic(self) -> None:
         event: Event[int] = Event("HELLO", int)
         sampled: Event[int] = event.sample(dt.timedelta(seconds=0.25))
@@ -54,15 +60,21 @@ class TestEvent(unittest.TestCase):
         mock = MagicMock()
         sampled.connect(mock)
 
-        event.emit(42)
-        mock.assert_not_called()
+        mock2 = MagicMock()
+        event.connect(mock2)  # so we can grab the last value of __emit_continuous
+
+        asyncio.get_event_loop().create_task(self.__emit_continuous(event, 1))
 
         task = asyncio.get_event_loop().create_task(self.__sleep(dt.timedelta(seconds=1.5)))
         asyncio.get_event_loop().run_until_complete(task)
 
-        # Even though the timer would have triggered a few times, the mock is
-        # only called once since the event was only emitted once
-        assert mock.call_count == 1
+        # The source event was triggered at least 100 times
+        assert mock2.call_args_list[-1].args[-1] > 100
+
+        # Even though the source event would have triggered many times, the
+        # mock is only called a few times (should be 6 but we allow
+        # flexibility)
+        assert 5 <= mock.call_count <= 7
 
     def test_timer(self) -> None:
         timer: TimerEvent = TimerEvent("Timer", dt.timedelta(seconds=0.25))
@@ -74,7 +86,8 @@ class TestEvent(unittest.TestCase):
         task = asyncio.get_event_loop().create_task(self.__sleep(dt.timedelta(seconds=1.5)))
         asyncio.get_event_loop().run_until_complete(task)
 
-        assert 4 <= mock.call_count <= 8
+        # Technically, should only happen 6 times but we allow flexibility
+        assert 5 <= mock.call_count <= 7
 
     async def __sleep(self, interval: dt.timedelta) -> None:
         await asyncio.sleep(interval.total_seconds())
