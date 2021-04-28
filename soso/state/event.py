@@ -109,8 +109,11 @@ class Event(typing.Generic[T]):
             token.disconnect()
 
     def sample(self, timer_in: typing.Union["Event[None]", dt.timedelta]) -> "Event[T]":
+        class Sentinel:
+            pass
+
         event: Event[T] = Event(self._name + "::sample")
-        last_value: typing.Optional[T] = None
+        last_value: typing.Union[typing.Optional[T], Sentinel] = Sentinel()
 
         timer: Event[None]
         if isinstance(timer_in, dt.timedelta):
@@ -124,10 +127,11 @@ class Event(typing.Generic[T]):
 
         def timer_callback(*a: typing.Any) -> None:
             nonlocal last_value
-            if last_value is not None:
+            if not isinstance(last_value, Sentinel):
                 to_emit = last_value
-                last_value = None
-                event.emit(to_emit)
+                last_value = Sentinel()
+                if to_emit is not None:
+                    event.emit(to_emit)
 
         self.connect(event_callback)
         timer.connect(timer_callback)
