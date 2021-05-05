@@ -1,15 +1,18 @@
 # soso.state
 
-`soso.state` is a simple, yet powerful Python library inspired by Redux which
+`soso.state` is a simple, yet powerful statically typed Python library inspired by Redux which
 gives you a single place (`Model[State]`) to put all your running application state.
-Updates are mediated through the `Model.update` function and changes are
-observed through the `Model.observe` function. Via the use of `SubModel`s, you
-can write components that read from and write to any level of application state
-without loss of generality.
+
+It is expressly designed for lazy developers who want to finish their work with as few
+bugs as possible and move on.
 
 [This image](README.png) may help get a better idea of the different components
-and how they work together.
+and how they work together:
 
+ * `Model[RootState]`: The entire application state
+ * `SubModel[RootState,State]`: A recursive, editable view into the main application state (i.e., views of views are possible)
+
+Both are exposed through a single protocol: `state.protocols.Model[StateT]` and most application code should be using this protocol.
 
 * [Main Benefits](#main-benefits): it gud
 * [Quickstart - Event-based](#quickstart---event-based)
@@ -53,73 +56,147 @@ The entire interface is defined in two places:
 Use the latter to create instances of the former. `State` should be a dataclass
 that describes the application state.
 
-Fuller examples are below.
-
-**Note**: The most up-to-date version of this code is in
-[`test_README.py`](tests/test_README.py). Feel free to check out the code and
-use the `tox` command to play around with the test.
+Let's do an interactive session:
 
 ```python
-from dataclasses import dataclass, field
-
-from soso import state
-
-# Step 1: define components of application state
-@dataclass
-class Person:
-  first_name: str
-  last_name: str
-
-@dataclass
-class AppState:
-  regional_managers: list[Person] = field(default_factory=list)
-  assistant_to_the_regional_managers: list[Person] = field(default_factory=list)
-  employees: list[Person] = field(default_factory=list)
-
-# Step 2: create the model
-app = state.build_model(AppState())
-
-# Update the model
-app.update(
-  regional_managers = [Person("Michael","Scott")],
-  assistant_to_the_regional_managers = [Person("Dwight","Schrute")],
-  employees = [Person("Jim","Halpert"),
-               Person("Pam","Beesly")]
-)
-
-# Observe changes in the 0th position of the regional_managers array.
-# The callback function is always called initially with the current values
-token = app.observe(lambda state: state.regional_managers[0],print)
-# Output: Person("Michael","Scott")
-
-# Update regional_managers and assistant_to_the_regional_managers atomically
-app.update(regional_managers = [Person("Dwight","Schrute")],
-           assistant_to_the_regional_managers = [])
-# output: Person("Dwight","Schrute")
-
-# No longer interested in regional_manager updates
-token.disconnect()
-
-# Observe changes to Pam's last name
-app.observe(lambda state: state.employees[1].last_name,print)
-# output: Beesley
-
-# create a submodel to track Pam Beesly
-pam = app.submodel(lambda x: x.employees[1])
-pam.update(last_name = "Halpert")
-# output: "Halpert"
-
-app.update(regional_managers = [Person("Jim","Halpert")])
-# No output, since no longer interested
-
-# TODO: Observe multiple values at the same time,
-# notified only once when one or more change at the same time
-app.observe(lambda state: state.regional_managers,
-            lambda state: state.employees,
-            print)
-# output: [Person("Jim","Halpert")] [Person("Pam","Halpert")]
+$ python3.8 -m virtualenv venv
+$ source venv/bin/activate
+$ python -m pip install git+https://github.com/sohailsomani/soso-state
+$ python
+>>> from soso import state
+>>> from dataclasses import dataclass
+>>> @dataclass
+... class State:
+...     qt: float = 3.14
+...
+...
+>>> model = state.build_model(State())
+>>> model
+#<Model state=State(qt=3.14)>
 ```
 
+The `Model` instance mediates access to the state. You can access the underlying
+state with the `.state` member:
+
+```python
+>>> model.state
+State(qt=3.14)
+```
+
+Now lets update the state:
+
+```python
+>>> model.update_properties(qt=6.28)
+>>> model
+#<Model state=State(qt=6.28)>
+```
+
+Here is another way to do the same thing:
+
+```python
+>>> def update(x:State):
+...     x.qt = 3.14
+...
+>>> model.update_state(update)
+>>> model
+#<Model state=State(qt=3.14)>
+```
+
+Keep in mind that the `x` being passed in to the update function is simply a
+proxy that mimics the shape of the underlying `State`. It is done this way in
+order to control mutation of the state. Specifically, do not read from it as 
+the read values are gibberish at best.
+
+However, note the use of Python's typing. This will save you mucho debugging
+time.
+
+Updating the state is fine, but how do we know when something has changed?
+
+```python
+>>> token = model.observe_property(lambda x: x.qt, print)
+3.14
+```
+
+Notice that the print function is called immediately. This is done to avoid
+issues with having your callbacks be out of sync with the state or (shudder)
+manually reading the state and then observing the property.
+
+Let's update the property again, and this time we will see our callback being
+invoked:
+
+```python
+>>> model.update_properties(qt=3.14)
+>>>
+```
+
+*WAIT A MINUTE!!!* I was promised output!!! Actually, here is where the fancy
+pants behavior comes in: you will only be notified if the value has changed.
+
+So let's actually change the value but first let us remind ourselves what the
+current state is:
+
+```python
+>>> model
+#<Model state=State(qt=3.14)>
+>>> model.update_properties(qt=6.28)
+6.28
+```
+
+Ah, there is the output.
+
+This is 90% of the functionality, but the other 80% is a little thing called a
+"submodel". This lets you create "views" into subsets of the application state
+and deal only with those subsets:
+
+```python
+>>> submodel = model.submodel(lambda x: x.qt)
+>>> submodel
+#<SubModel state=6.28 parent=#<Model state=State(qt=6.28)>>
+```
+
+The exact same things you did above, you can do with a submodel. Except of
+course in the previous case, our state was a `State` and in this case it's... a
+float?
+
+Let's update the float in the submodel and look at the root model before and
+after:
+
+```python
+>>> model
+#<Model state=State(qt=6.28)>
+>>> submodel.restore(3.14)
+3.14
+>>> model
+#<Model state=State(qt=3.14)>
+```
+
+`Model[State].restore()` is a special function that you use to replace the
+entire state. It is meant to be used in conjunction with `snapshot()` but I find
+it incredibly useful to create submodels of scalar values and update them
+independently of the parent model.
+
+Notice that we still got the output from our callback even though we updated the
+submodel and not the parent model.
+
+Magic!
+
+Now lets say we are no longer interested in changes to this value. We simply
+disconnect:
+
+```python
+>>> token.disconnect()
+```
+
+This is the majority of what you'll use day to day. It's not fancy but the
+orthogonal features combine to create powerful state management that reduces if
+not altogether eliminates common state management bugs. I should know, I use it!
+
+Further reading:
+
+* A more thorough example is available in
+[`test_README.py`](tests/test_README.py).
+* [soso.state.protocols](soso/state/protocols.py): The `Model[State]` interface
+* Check out the tests
 
 ## Quickstart - Streaming
 
@@ -175,7 +252,7 @@ async def mean_calc(source: state.protocols.Model[int],
 async def value_generator(some_source: AsyncIterator[float],
                           sink: state.protocols.Model[float]):
   async for value in some_source:
-    sink.put(value)
+    sink.restore(value)
     
 # Step 3: create a model and the relevant tasks:
 model = state.build_model(State())
