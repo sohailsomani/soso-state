@@ -324,3 +324,9 @@ class _SubModel(typing.Generic[RootStateT, StateT], protocols.Model[StateT]):
 
     def submodel(self, property: typing.Callable[[StateT], T]) -> protocols.Model[T]:
         return _SubModel(self, property)
+
+    def __repr__(self) -> str:
+        return str(self)
+
+    def __str__(self) -> str:
+        return f"#<SubModel state={self.state} parent={self.__parent}>"
