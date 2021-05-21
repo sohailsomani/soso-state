@@ -171,3 +171,14 @@ class TestModel(unittest.TestCase):
         self.assertIsNotNone(m2)
 
         self.assertEqual(model.state.value, 0)
+
+    # TODO: figure out how to do this
+    """
+    def test_update_context(self) -> None:
+        model = state.build_model(State())
+
+        with model.update_context() as s:
+            s.lst.append(25)
+
+        self.assertEqual(model.state.lst, [25])
+    """
