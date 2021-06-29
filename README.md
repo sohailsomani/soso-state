@@ -10,9 +10,11 @@ bugs as possible and move on.
 and how they work together:
 
  * `Model[RootState]`: The entire application state
- * `SubModel[RootState,State]`: A recursive, editable view into the main application state (i.e., views of views are possible)
+ * `SubModel[RootState,State]`: A recursive, editable view into the main
+   application state (i.e., views of views are possible)
 
-Both are exposed through a single protocol: `state.protocols.Model[StateT]` and most application code should be using this protocol.
+Both are exposed through a single protocol: `state.protocols.Model[StateT]` and
+most application code should be using this protocol.
 
 * [Main Benefits](#main-benefits): it gud
 * [Quickstart - Event-based](#quickstart---event-based)
@@ -39,8 +41,8 @@ Both are exposed through a single protocol: `state.protocols.Model[StateT]` and 
     * Only events for data that is actually changed are propagated
 * Predictable:
     * Consistent state => predictable application
-    * Using Python's optional strong static typing ([no, really](typecheck.png)) to catch as many
-      errors as possible.
+    * Using Python's optional strong static typing ([no, really](typecheck.png))
+      to catch as many errors as possible.
 
 ## Quickstart - Event-based
 
@@ -213,7 +215,8 @@ The key entrypoint for this usage is the function
 
 This returns an awaitable `Event[T]` which allows you to stream changes in values.
 
-A simple (incomplete) example is below. A fuller example is available in [streaming](tests/test_Stream.py).
+A simple (incomplete) example is below. A fuller example is available in
+[streaming](tests/test_Stream.py).
 
 ```python
 from soso import state
