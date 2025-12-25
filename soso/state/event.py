@@ -4,29 +4,24 @@ import logging
 import typing
 import weakref
 
-T = typing.TypeVar('T')
-T_contra = typing.TypeVar('T_contra', contravariant=True)
+T = typing.TypeVar("T")
+T_contra = typing.TypeVar("T_contra", contravariant=True)
 
-__all__ = ['Event', 'EventToken']
+__all__ = ["Event", "EventToken"]
 
 
 class EventCallback(typing.Generic[T_contra], typing.Protocol):
-    def __call__(self, __value: T_contra) -> None:
-        ...
+    def __call__(self, __value: T_contra) -> None: ...
 
 
 class _LoggerInterface(typing.Protocol):
-    def info(self, msg: str, *args: typing.Any, **kwargs: typing.Any) -> None:
-        ...
+    def info(self, msg: str, *args: typing.Any, **kwargs: typing.Any) -> None: ...
 
-    def debug(self, msg: str, *args: typing.Any, **kwargs: typing.Any) -> None:
-        ...
+    def debug(self, msg: str, *args: typing.Any, **kwargs: typing.Any) -> None: ...
 
-    def error(self, msg: str, *args: typing.Any, **kwargs: typing.Any) -> None:
-        ...
+    def error(self, msg: str, *args: typing.Any, **kwargs: typing.Any) -> None: ...
 
-    def exception(self, msg: typing.Any, *args: typing.Any, **kwargs: typing.Any) -> None:
-        ...
+    def exception(self, msg: typing.Any, *args: typing.Any, **kwargs: typing.Any) -> None: ...
 
 
 class _DummyLogger:
