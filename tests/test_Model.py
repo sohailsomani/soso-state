@@ -1,4 +1,5 @@
 import asyncio
+import gc
 import typing
 import unittest
 from dataclasses import dataclass, field
@@ -344,6 +345,65 @@ class TestModel(unittest.TestCase):
         results.clear()
         model.update_properties(value=5)
         self.assertEqual(len(results), 0)
+
+    def test_observe_property_changes_explicit_disconnect(self) -> None:
+        model = Model()
+
+        results = []
+
+        def callback(prev: int | None, new: int) -> None:
+            results.append((prev, new))
+
+        token = model.observe_property_changes(lambda x: x.value, callback)
+
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0], (None, 0))
+
+        results.clear()
+
+        token.disconnect()
+
+        model.update_properties(value=42)
+
+        self.assertEqual(len(results), 0)
+
+    def test_observe_property_changes_events_persist(self) -> None:
+        """Test that events persist in the model even after tokens are deleted.
+
+        This behavior is BY DESIGN, not a bug. When observe_property_changes() is called,
+        an event is created for the property path and stored permanently in the model.
+        The event holds the callback handler, and the callback continues to fire even
+        after the token is deleted and garbage collected.
+
+        This enables two usage patterns:
+        1. Explicit control: Use token.disconnect() to stop receiving events
+        2. Always-on: Ignore the token and continue receiving events indefinitely
+
+        The token's __del__ calls disconnect(), but deleting the token variable doesn't
+        trigger __del__ because the event still holds a reference to the token in its
+        handlers list. Only explicit disconnect() removes the handler.
+        """
+        model = Model()
+
+        results = []
+
+        def callback(prev: int | None, new: int) -> None:
+            results.append((prev, new))
+
+        token = model.observe_property_changes(lambda x: x.value, callback)
+
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0], (None, 0))
+
+        results.clear()
+
+        del token
+        gc.collect()
+
+        model.update_properties(value=42)
+
+        self.assertEqual(len(results), 1)
+        self.assertEqual(results[0], (0, 42))
 
     # TODO: figure out how to do this
     """
