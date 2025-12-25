@@ -191,6 +191,18 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
     def wait_for_property(self, property: PropertyCallback[StateT, T]) -> Event[T]:
         return self.event(property)
 
+    def wait_for_change(self) -> Event[tuple[typing.Optional[StateT], StateT]]:
+        return self.wait_for_property_change(lambda x: x)
+
+    def wait_for_property_change(
+        self, property: PropertyCallback[StateT, T]
+    ) -> Event[tuple[typing.Optional[T], T]]:
+        event = Event[tuple[typing.Optional[T], T]]("WaitForPropertyChange")
+        self.observe_property_changes(
+            property, lambda prev, new: event.emit((prev, new))
+        )
+        return event
+
     def snapshot(self) -> StateT:
         return self.snapshot_property(lambda x: x)
 
@@ -402,6 +414,17 @@ class _SubModel(typing.Generic[RootStateT, StateT], protocols.Model[StateT]):
             return property(self.__root_property(state))
 
         return self.__parent.wait_for_property(wait_for_property)
+
+    def wait_for_change(self) -> Event[tuple[typing.Optional[StateT], StateT]]:
+        return self.__parent.wait_for_property_change(self.__root_property)
+
+    def wait_for_property_change(
+        self, property: typing.Callable[[StateT], T]
+    ) -> Event[tuple[typing.Optional[T], T]]:
+        def wait_for_property_change(state: RootStateT) -> T:
+            return property(self.__root_property(state))
+
+        return self.__parent.wait_for_property_change(wait_for_property_change)
 
     def snapshot(self) -> StateT:
         return self.__parent.snapshot_property(self.__root_property)

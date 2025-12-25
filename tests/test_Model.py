@@ -1,9 +1,11 @@
+import asyncio
 import typing
 import unittest
 from dataclasses import dataclass, field
 from unittest.mock import MagicMock
 
 from soso import state
+from soso.state import protocols
 
 
 @dataclass
@@ -13,7 +15,7 @@ class State:
     lst: typing.List[int] = field(default_factory=list)
 
 
-def Model(s: State = State()) -> state.protocols.Model[State]:  # noqa
+def Model(s: State = State()) -> protocols.Model[State]:  # noqa
     return state.build_model(s)
 
 
@@ -21,7 +23,7 @@ class NotADataClass:
     pass
 
 
-def Model2() -> state.protocols.Model[NotADataClass]:  # noqa
+def Model2() -> protocols.Model[NotADataClass]:  # noqa
     return state.build_model(NotADataClass())
 
 
@@ -167,7 +169,7 @@ class TestModel(unittest.TestCase):
 
     def test_build_model(self) -> None:
         model = state.build_model(State())
-        m2: state.protocols.Model[State] = model
+        m2: protocols.Model[State] = model
         self.assertIsNotNone(m2)
 
         self.assertEqual(model.state.value, 0)
@@ -275,6 +277,74 @@ class TestModel(unittest.TestCase):
         mock_key2_changes.assert_not_called()
         mock_dict_regular.assert_called_once_with("updated2")
 
+    def test_wait_for_change_basic(self) -> None:
+        model = Model()
+        event = model.wait_for_change()
+
+        results = []
+        event.connect(lambda prev_new: results.append(prev_new))
+
+        model.update_properties(value=5)
+        self.assertEqual(len(results), 1)
+        prev, new = results[0]
+        self.assertEqual(prev.value, 0)
+        self.assertEqual(new.value, 5)
+
+        results.clear()
+        model.update_properties(value=10)
+        self.assertEqual(len(results), 1)
+        prev, new = results[0]
+        self.assertEqual(prev.value, 5)
+        self.assertEqual(new.value, 10)
+
+    def test_wait_for_change_no_emit_on_same_value(self) -> None:
+        model = Model()
+        event = model.wait_for_change()
+
+        results = []
+        event.connect(lambda prev_new: results.append(prev_new))
+
+        model.update_properties(value=5)
+        self.assertEqual(len(results), 1)
+
+        results.clear()
+        model.update_properties(value=5)
+        self.assertEqual(len(results), 0)
+
+    def test_wait_for_property_change_basic(self) -> None:
+        model = Model()
+        event = model.wait_for_property_change(lambda x: x.value)
+
+        results = []
+        event.connect(lambda prev_new: results.append(prev_new))
+
+        model.update_properties(value=5)
+        self.assertEqual(len(results), 1)
+        prev, new = results[0]
+        self.assertEqual(prev, 0)
+        self.assertEqual(new, 5)
+
+        results.clear()
+        model.update_properties(value=10)
+        self.assertEqual(len(results), 1)
+        prev, new = results[0]
+        self.assertEqual(prev, 5)
+        self.assertEqual(new, 10)
+
+    def test_wait_for_property_change_no_emit_on_same_value(self) -> None:
+        model = Model()
+        event = model.wait_for_property_change(lambda x: x.value)
+
+        results = []
+        event.connect(lambda prev_new: results.append(prev_new))
+
+        model.update_properties(value=5)
+        self.assertEqual(len(results), 1)
+
+        results.clear()
+        model.update_properties(value=5)
+        self.assertEqual(len(results), 0)
+
     # TODO: figure out how to do this
     """
     def test_update_context(self) -> None:
@@ -285,3 +355,21 @@ class TestModel(unittest.TestCase):
 
         self.assertEqual(model.state.lst, [25])
     """
+
+
+class TestModelAsync(unittest.IsolatedAsyncioTestCase):
+    async def test_wait_for_change_async(self) -> None:
+        model = Model()
+
+        async def trigger_change() -> None:
+            await asyncio.sleep(0)
+            model.update_properties(value=42)
+
+        asyncio.create_task(trigger_change())
+
+        prev, new = await model.wait_for_change()
+
+        assert prev is not None
+
+        self.assertEqual(prev.value, 0)
+        self.assertEqual(new.value, 42)
