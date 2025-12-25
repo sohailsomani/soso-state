@@ -118,6 +118,11 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
             self._logger.debug("Exception during callback", exc_info=True)
         return token
 
+    def observe_changes(
+        self, callback: typing.Callable[[typing.Optional[StateT], StateT], None]
+    ) -> EventToken:
+        return self.observe_property_changes(lambda x: x, callback)
+
     def observe_property_changes(
         self,
         property: PropertyCallback[StateT, T],
@@ -373,6 +378,11 @@ class _SubModel(typing.Generic[RootStateT, StateT], protocols.Model[StateT]):
             return property(self.__root_property(state))
 
         return self.__parent.observe_property(cb, callback)
+
+    def observe_changes(
+        self, callback: typing.Callable[[typing.Optional[StateT], StateT], None]
+    ) -> EventToken:
+        return self.observe_property_changes(lambda x: x, callback)
 
     def observe_property_changes(
         self,
