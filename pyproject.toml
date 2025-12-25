@@ -1,0 +1,124 @@
+[build-system]
+requires = ["setuptools>=68.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "soso-state"
+version = "0.0.1"
+description = "Python 3.8+ application state container"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+authors = [{ name = "Sohail Somani", email = "me@sohailsomani.com" }]
+classifiers = [
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Typing :: Typed",
+]
+keywords = ["state", "redux", "state-management", "reactive", "observable"]
+
+[project.urls]
+Homepage = "https://github.com/sohailsomani/soso-state"
+Repository = "https://github.com/sohailsomani/soso-state"
+Issues = "https://github.com/sohailsomani/soso-state/issues"
+
+[project.optional-dependencies]
+dev = [
+  "mypy>=0.800",
+  "pytest",
+  "pytest-benchmark",
+  "pytest-cov",
+  "pytest-profiling",
+  "gprof2dot",
+  "epc",
+  "jedi",
+  "importmagic",
+  "data-science-types",
+]
+mypyc = ["mypy[mypyc]>=0.800"]
+
+[tool.setuptools]
+zip-safe = false
+
+[tool.setuptools.packages.find]
+include = ["soso*"]
+namespaces = true
+
+[tool.setuptools.package-data]
+soso = ["*.pyi", "py.typed"]
+"soso.state" = ["*.pyi", "py.typed"]
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+namespace_packages = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+  "--strict-markers",
+  "--strict-config",
+  "--cov=soso",
+  "--cov-report=term-missing",
+]
+
+[tool.coverage.run]
+source = ["soso"]
+branch = true
+
+[tool.coverage.report]
+exclude_lines = [
+  "pragma: no cover",
+  "def __repr__",
+  "raise AssertionError",
+  "raise NotImplementedError",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+  "@(abc\\.)?abstractmethod",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py38"
+
+[tool.ruff.lint]
+select = [
+  "E",  # pycodestyle errors
+  "W",  # pycodestyle warnings
+  "F",  # pyflakes
+  "I",  # isort
+  "B",  # flake8-bugbear
+  "C4", # flake8-comprehensions
+  "UP", # pyupgrade
+]
+ignore = []
+
+[tool.ruff.lint.isort]
+known-first-party = ["soso"]
+
+[tool.black]
+line-length = 100
+target-version = ["py38", "py39", "py310", "py311", "py312"]
+include = '\.pyi?$'
