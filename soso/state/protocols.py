@@ -9,7 +9,7 @@ T = typing.TypeVar("T")
 T_contra = typing.TypeVar("T_contra", contravariant=True)
 T_co = typing.TypeVar("T_co", covariant=True)
 
-__all__ = []  # type: ignore
+__all__: list[str] = []
 
 PropertyCallback = typing.Callable[[StateT_contra], T_co]
 StateUpdateCallback = typing.Callable[[StateT_contra], None]
@@ -44,11 +44,13 @@ class Model(typing.Protocol[StateT]):
 
     def wait_for_property(self, property: typing.Callable[[StateT], T]) -> Event[T]: ...
 
-    def wait_for_change(self) -> Event[tuple[typing.Optional[StateT], StateT]]: ...
+    def wait_for_change(
+        self,
+    ) -> Event[typing.Tuple[typing.Optional[StateT], StateT]]: ...
 
     def wait_for_property_change(
         self, property: typing.Callable[[StateT], T]
-    ) -> Event[tuple[typing.Optional[T], T]]: ...
+    ) -> Event[typing.Tuple[typing.Optional[T], T]]: ...
 
     def snapshot(self) -> StateT: ...
 

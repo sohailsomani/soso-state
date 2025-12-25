@@ -8,6 +8,6 @@ from IPython.core import display
 def run() -> typing.Tuple[Model, UI]:
     model = Model()
     gui = UI(model)
-    display.display(gui)
+    display.display(gui)  # type: ignore
 
     return model, gui

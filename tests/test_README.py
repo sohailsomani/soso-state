@@ -16,25 +16,39 @@ class Person:
 @dataclass
 class AppState:
     regional_managers: typing.List[Person] = field(default_factory=list)
-    assistant_to_the_regional_managers: typing.List[Person] = field(default_factory=list)
+    assistant_to_the_regional_managers: typing.List[Person] = field(
+        default_factory=list
+    )
     employees: typing.List[Person] = field(default_factory=list)
 
 
 class TestREADME(unittest.TestCase):
+    def setUp(self) -> None:
+        self.loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self.loop)
+
+    def tearDown(self) -> None:
+        self.loop.close()
+        asyncio.set_event_loop(None)
+
     def test_readme(self) -> None:
         app = state.build_model(AppState())
         # Add some initial values
-        app.update_properties(regional_managers=[Person("Michael", "Scott")],
-                              assistant_to_the_regional_managers=[Person("Dwight", "Schrute")],
-                              employees=[Person("Jim", "Halpert"),
-                                         Person("Pam", "Beesly")])
+        app.update_properties(
+            regional_managers=[Person("Michael", "Scott")],
+            assistant_to_the_regional_managers=[Person("Dwight", "Schrute")],
+            employees=[Person("Jim", "Halpert"), Person("Pam", "Beesly")],
+        )
 
         # Ensure that the values actually were persisted to the application
         # state
         self.assertEqual(app.state.regional_managers, [Person("Michael", "Scott")])
-        self.assertEqual(app.state.assistant_to_the_regional_managers,
-                         [Person("Dwight", "Schrute")])
-        self.assertEqual(app.state.employees, [Person("Jim", "Halpert"), Person("Pam", "Beesly")])
+        self.assertEqual(
+            app.state.assistant_to_the_regional_managers, [Person("Dwight", "Schrute")]
+        )
+        self.assertEqual(
+            app.state.employees, [Person("Jim", "Halpert"), Person("Pam", "Beesly")]
+        )
 
         x: AppState
         regional_manager = MagicMock()
@@ -60,8 +74,10 @@ class TestREADME(unittest.TestCase):
         pams_last_name.assert_called_with("Halpert")
 
         regional_manager.reset_mock()
-        app.update_properties(regional_managers=[Person("Dwight", "Schrute")],
-                              assistant_to_the_regional_managers=[])
+        app.update_properties(
+            regional_managers=[Person("Dwight", "Schrute")],
+            assistant_to_the_regional_managers=[],
+        )
 
         # In this case, the entire first object is returned as opposed to Pam's
         # last name
@@ -71,7 +87,8 @@ class TestREADME(unittest.TestCase):
 
         task = asyncio.get_event_loop().create_task(self.__myfunc(app))
         asyncio.get_event_loop().call_soon(
-            lambda: app.update_properties(regional_managers=[Person("Jim", "Halpert")]))
+            lambda: app.update_properties(regional_managers=[Person("Jim", "Halpert")])
+        )
         asyncio.get_event_loop().run_until_complete(task)
 
         self.assertEqual(task.result(), [Person("Jim", "Halpert")])
@@ -79,7 +96,9 @@ class TestREADME(unittest.TestCase):
         # manager
         regional_manager.assert_not_called()
 
-    async def __myfunc(self, app: state.protocols.Model[AppState]) -> typing.List[Person]:
+    async def __myfunc(
+        self, app: state.protocols.Model[AppState]
+    ) -> typing.List[Person]:
         def prop(state: AppState) -> typing.List[Person]:
             return state.regional_managers
 

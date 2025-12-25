@@ -9,29 +9,32 @@ from soso import state
 
 # An example (not really a test) of how to implement streaming calculations
 
-NaN = float('nan')
+NaN = float("nan")
 
 
 @dataclass
 class State:
     sensor_value: float = NaN
     period_10_range: typing.Tuple[float, float] = field(
-        default_factory=lambda: (NaN, NaN))
+        default_factory=lambda: (NaN, NaN)
+    )
     period_10_midpoint: float = NaN
 
     period_30_range: typing.Tuple[float, float] = field(
-        default_factory=lambda: (NaN, NaN))
+        default_factory=lambda: (NaN, NaN)
+    )
     period_30_midpoint: float = NaN
 
 
-def Model() -> state.protocols.Model[State]: # noqa
+def Model() -> state.protocols.Model[State]:  # noqa
     return state.build_model(State())
 
 
-async def range_calculator(source: state.protocols.Model[float],
-                           sink: state.protocols.Model[typing.Tuple[float,
-                                                                    float]],
-                           n: int) -> None:
+async def range_calculator(
+    source: state.protocols.Model[float],
+    sink: state.protocols.Model[typing.Tuple[float, float]],
+    n: int,
+) -> None:
     values = []
     it = source.wait_for().__aiter__()
     while True:
@@ -54,9 +57,11 @@ async def sensor(sink: state.protocols.Model[float], iters: int) -> None:
         await asyncio.sleep(0.01)
 
 
-async def midpoint(high: state.protocols.Model[float],
-                   low: state.protocols.Model[float],
-                   sink: state.protocols.Model[float]) -> None:
+async def midpoint(
+    high: state.protocols.Model[float],
+    low: state.protocols.Model[float],
+    sink: state.protocols.Model[float],
+) -> None:
     # An example of waiting for multiple values
     while True:
         highval, lowval = await asyncio.gather(high.wait_for(), low.wait_for())
@@ -64,18 +69,31 @@ async def midpoint(high: state.protocols.Model[float],
 
 
 class TestStream(unittest.TestCase):
+    def setUp(self) -> None:
+        self.loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self.loop)
+
+    def tearDown(self) -> None:
+        self.loop.close()
+        asyncio.set_event_loop(None)
+
     def test_simple(self) -> None:
         model = Model()
-        f1 = range_calculator(model.submodel(lambda x: x.sensor_value),
-                              model.submodel(lambda x: x.period_10_range),
-                              n=10)
-        f2 = range_calculator(model.submodel(lambda x: x.sensor_value),
-                              model.submodel(lambda x: x.period_30_range),
-                              n=30)
+        f1 = range_calculator(
+            model.submodel(lambda x: x.sensor_value),
+            model.submodel(lambda x: x.period_10_range),
+            n=10,
+        )
+        f2 = range_calculator(
+            model.submodel(lambda x: x.sensor_value),
+            model.submodel(lambda x: x.period_30_range),
+            n=30,
+        )
 
         values = []
-        model.observe_property(lambda x: x.sensor_value,
-                               lambda value: values.append(value))
+        model.observe_property(
+            lambda x: x.sensor_value, lambda value: values.append(value)
+        )
         # drop the NaN
         values.clear()
 
@@ -87,13 +105,19 @@ class TestStream(unittest.TestCase):
         loop.create_task(f1)
         loop.create_task(f2)
         loop.create_task(
-            midpoint(model.submodel(lambda x: x.period_30_range[1]),
-                     model.submodel(lambda x: x.period_30_range[0]),
-                     model.submodel(lambda x: x.period_30_midpoint)))
+            midpoint(
+                model.submodel(lambda x: x.period_30_range[1]),
+                model.submodel(lambda x: x.period_30_range[0]),
+                model.submodel(lambda x: x.period_30_midpoint),
+            )
+        )
         loop.create_task(
-            midpoint(model.submodel(lambda x: x.period_10_range[1]),
-                     model.submodel(lambda x: x.period_10_range[0]),
-                     model.submodel(lambda x: x.period_10_midpoint)))
+            midpoint(
+                model.submodel(lambda x: x.period_10_range[1]),
+                model.submodel(lambda x: x.period_10_range[0]),
+                model.submodel(lambda x: x.period_10_midpoint),
+            )
+        )
         t3 = loop.create_task(generator)
 
         # Ensure all NaN
