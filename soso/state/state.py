@@ -7,20 +7,51 @@ from dataclasses import dataclass, field, is_dataclass
 from typing import ClassVar
 
 from soso.state import protocols
-from soso.state.event import (Event, EventCallback, EventToken, _DummyLogger, _LoggerInterface)
-from soso.state.util import (GetAttr, GetItem, PropertyOp, Proxy, SetAttr, SetItem, _get_ops)
+from soso.state.event import (
+    Event,
+    EventCallback,
+    EventToken,
+    _DummyLogger,
+    _LoggerInterface,
+)
+from soso.state.util import (
+    GetAttr,
+    GetItem,
+    PropertyOp,
+    Proxy,
+    SetAttr,
+    SetItem,
+    _get_ops,
+)
 
-__all__ = ['Model', 'StateT', 'T', 'PropertyCallback', 'build_model', 'initialize_logging']
+__all__ = [
+    "Model",
+    "StateT",
+    "T",
+    "PropertyCallback",
+    "build_model",
+    "initialize_logging",
+]
 
-StateT_contra = typing.TypeVar('StateT_contra', contravariant=True)
-StateT = typing.TypeVar('StateT')
-RootStateT = typing.TypeVar('RootStateT')
-T = typing.TypeVar('T')
-T_contra = typing.TypeVar('T_contra', contravariant=True)
-T_co = typing.TypeVar('T_co', covariant=True)
+StateT_contra = typing.TypeVar("StateT_contra", contravariant=True)
+StateT = typing.TypeVar("StateT")
+RootStateT = typing.TypeVar("RootStateT")
+T = typing.TypeVar("T")
+T_contra = typing.TypeVar("T_contra", contravariant=True)
+T_co = typing.TypeVar("T_co", covariant=True)
 
 PropertyCallback = typing.Callable[[StateT_contra], T_co]
 StateUpdateCallback = typing.Callable[[StateT_contra], None]
+
+
+class _Sentinel:
+    """Sentinel value to indicate no value has been set"""
+
+    def __repr__(self) -> str:
+        return "<NOT_SET>"
+
+
+_NOT_SET = _Sentinel()
 
 
 def initialize_logging() -> None:
@@ -30,7 +61,9 @@ def initialize_logging() -> None:
 
 @dataclass
 class Node:
-    children: typing.DefaultDict[str, "Node"] = field(default_factory=lambda: defaultdict(Node))
+    children: typing.DefaultDict[str, "Node"] = field(
+        default_factory=lambda: defaultdict(Node)
+    )
     event: Event[typing.Any] = field(default_factory=lambda: Event("NodeUpdateEvent"))
     # The type of access to this node
     op: typing.Optional[PropertyOp] = None
@@ -54,7 +87,7 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
         for op in ops:
             root = root.children[op.key]
             root.op = op
-            s += '.' + str(op.key)
+            s += "." + str(op.key)
             root.event._name = s
         return root
 
@@ -70,8 +103,9 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
     def observe(self, callback: EventCallback[StateT]) -> EventToken:
         return self.observe_property(lambda x: x, callback)
 
-    def observe_property(self, func: PropertyCallback[StateT, T],
-                         callback: EventCallback[T]) -> EventToken:
+    def observe_property(
+        self, func: PropertyCallback[StateT, T], callback: EventCallback[T]
+    ) -> EventToken:
         event, ops = self.__event(func)
         token = event.connect(callback)
         try:
@@ -84,14 +118,59 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
             self._logger.debug("Exception during callback", exc_info=True)
         return token
 
+    def observe_property_changes(
+        self,
+        property: PropertyCallback[StateT, T],
+        callback: typing.Callable[[typing.Optional[T], T], None],
+    ) -> EventToken:
+        """
+        Observe property changes, only firing when value actually changes.
+
+        The callback receives (previous_value, new_value).
+        On the initial call, previous_value will be None.
+        """
+        event, ops = self.__event(property)
+
+        last_value: typing.Union[_Sentinel, typing.Any] = _NOT_SET
+
+        def wrapped_callback(new_value: T) -> None:
+            nonlocal last_value
+
+            if last_value is not _NOT_SET:
+                try:
+                    if last_value == new_value:
+                        return
+                except Exception:
+                    self._logger.debug(
+                        "Comparison failed, emitting anyway", exc_info=True
+                    )
+
+            prev_value: typing.Optional[T] = (
+                typing.cast(T, last_value) if last_value is not _NOT_SET else None
+            )
+            last_value = copy.deepcopy(new_value)
+            callback(prev_value, new_value)
+
+        token = event.connect(wrapped_callback)
+
+        try:
+            value = self.__get_value_for_ops(ops)
+            callback(None, value)
+            last_value = copy.deepcopy(value)
+        except Exception:
+            self._logger.debug("Exception during callback", exc_info=True)
+
+        return token
+
     def _get_submodel_root(self) -> typing.Callable[[StateT], typing.Any]:
         return lambda x: x
 
     def update_state(self, func: StateUpdateCallback[StateT]) -> None:
         self._update_state(lambda x: x, func)
 
-    def update_state_root(self, root: typing.Callable[[StateT], T],
-                          func: StateUpdateCallback[T]) -> None:
+    def update_state_root(
+        self, root: typing.Callable[[StateT], T], func: StateUpdateCallback[T]
+    ) -> None:
         return self._update_state(root, func)
 
     def update_properties(self, **kwargs: typing.Any) -> None:
@@ -115,7 +194,9 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
     def snapshot(self) -> StateT:
         return self.snapshot_property(lambda x: x)
 
-    def snapshot_property(self, property: typing.Optional[PropertyCallback[StateT, T]] = None) -> T:
+    def snapshot_property(
+        self, property: typing.Optional[PropertyCallback[StateT, T]] = None
+    ) -> T:
         if property is None:
 
             def cb(x: StateT) -> StateT:
@@ -130,7 +211,9 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
         self.__current_state = copy.deepcopy(snapshot)
         self.__fire_all_child_events(self.__root_node, self.__current_state)
 
-    def restore_property(self, snapshot: T, property: PropertyCallback[StateT, T]) -> None:
+    def restore_property(
+        self, snapshot: T, property: PropertyCallback[StateT, T]
+    ) -> None:
         proxy = self.__make_proxy()
         property(proxy)
         ops = self.__get_ops(proxy)
@@ -148,8 +231,9 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
 
         self.update_state(update)
 
-    def _update_state(self, root: typing.Callable[[StateT], T],
-                      func: StateUpdateCallback[T]) -> None:
+    def _update_state(
+        self, root: typing.Callable[[StateT], T], func: StateUpdateCallback[T]
+    ) -> None:
 
         # Get all changes
         tproxy = self.__make_proxy()
@@ -222,8 +306,8 @@ class Model(typing.Generic[StateT], protocols.Model[StateT]):
         return _get_ops(proxy)
 
     def __event(
-            self, func: PropertyCallback[StateT,
-                                         T]) -> typing.Tuple[Event[T], typing.List[PropertyOp]]:
+        self, func: PropertyCallback[StateT, T]
+    ) -> typing.Tuple[Event[T], typing.List[PropertyOp]]:
         proxy = self.__make_proxy()
         func(proxy)
         ops = self.__get_ops(proxy)
@@ -259,26 +343,41 @@ def build_model(initial_value: StateT) -> protocols.Model[StateT]:
 
 
 class _SubModel(typing.Generic[RootStateT, StateT], protocols.Model[StateT]):
-    def __init__(self, parent: protocols.Model[RootStateT],
-                 root_property: typing.Callable[[RootStateT], StateT]):
+    def __init__(
+        self,
+        parent: protocols.Model[RootStateT],
+        root_property: typing.Callable[[RootStateT], StateT],
+    ):
         self.__parent = parent
         self.__root_property = root_property
 
     def observe(self, callback: EventCallback[StateT]) -> EventToken:
         return self.__parent.observe_property(self.__root_property, callback)
 
-    def observe_property(self, property: typing.Callable[[StateT], T],
-                         callback: EventCallback[T]) -> EventToken:
+    def observe_property(
+        self, property: typing.Callable[[StateT], T], callback: EventCallback[T]
+    ) -> EventToken:
         def cb(state: RootStateT) -> T:
             return property(self.__root_property(state))
 
         return self.__parent.observe_property(cb, callback)
 
+    def observe_property_changes(
+        self,
+        property: typing.Callable[[StateT], T],
+        callback: typing.Callable[[typing.Optional[T], T], None],
+    ) -> EventToken:
+        def cb(state: RootStateT) -> T:
+            return property(self.__root_property(state))
+
+        return self.__parent.observe_property_changes(cb, callback)
+
     def update_state(self, func: StateUpdateCallback[StateT]) -> None:
         return self.__parent.update_state_root(self.__root_property, func)
 
-    def update_state_root(self, root: typing.Callable[[StateT], T],
-                          func: StateUpdateCallback[T]) -> None:
+    def update_state_root(
+        self, root: typing.Callable[[StateT], T], func: StateUpdateCallback[T]
+    ) -> None:
         def update_state_root(state: RootStateT) -> T:
             return root(self.__root_property(state))
 
@@ -316,7 +415,9 @@ class _SubModel(typing.Generic[RootStateT, StateT], protocols.Model[StateT]):
     def restore(self, snapshot: StateT) -> None:
         self.__parent.restore_property(snapshot, self.__root_property)
 
-    def restore_property(self, snapshot: T, property: typing.Callable[[StateT], T]) -> None:
+    def restore_property(
+        self, snapshot: T, property: typing.Callable[[StateT], T]
+    ) -> None:
         def restore_property(state: RootStateT) -> T:
             return property(self.__root_property(state))
 

@@ -172,6 +172,109 @@ class TestModel(unittest.TestCase):
 
         self.assertEqual(model.state.value, 0)
 
+    def test_observe_property_changes_basic(self) -> None:
+        model = Model()
+        mock = MagicMock()
+
+        model.observe_property_changes(lambda x: x.value, mock)
+        mock.assert_called_with(None, 0)
+
+        mock.reset_mock()
+        model.update_properties(value=5)
+        mock.assert_called_with(0, 5)
+
+        mock.reset_mock()
+        model.update_properties(value=5)
+        mock.assert_not_called()
+
+        mock.reset_mock()
+        model.update_properties(value=10)
+        mock.assert_called_with(5, 10)
+
+    def test_observe_property_changes_initial_callback(self) -> None:
+        model = Model(State(value=42))
+        mock = MagicMock()
+
+        model.observe_property_changes(lambda x: x.value, mock)
+        mock.assert_called_once_with(None, 42)
+
+    def test_observe_property_changes_independent(self) -> None:
+        model = Model()
+        mock_changes = MagicMock()
+        mock_regular = MagicMock()
+
+        model.observe_property_changes(lambda x: x.value, mock_changes)
+        model.observe_property(lambda x: x.value, mock_regular)
+
+        mock_changes.assert_called_with(None, 0)
+        mock_regular.assert_called_with(0)
+
+        mock_changes.reset_mock()
+        mock_regular.reset_mock()
+
+        model.update_properties(value=5)
+        mock_changes.assert_called_with(0, 5)
+        mock_regular.assert_called_with(5)
+
+    def test_observe_property_changes_dict_isolation(self) -> None:
+        model = Model()
+
+        def update_init(state: State) -> None:
+            state.d["key1"] = "value1"
+            state.d["key2"] = "value2"
+
+        model.update_state(update_init)
+
+        mock_key1_changes = MagicMock()
+        mock_key2_changes = MagicMock()
+        mock_dict_regular = MagicMock()
+
+        model.observe_property_changes(lambda x: x.d["key1"], mock_key1_changes)
+        model.observe_property_changes(lambda x: x.d["key2"], mock_key2_changes)
+        model.observe_property(lambda x: x.d["key2"], mock_dict_regular)
+
+        mock_key1_changes.assert_called_once_with(None, "value1")
+        mock_key2_changes.assert_called_once_with(None, "value2")
+        mock_dict_regular.assert_called_once_with("value2")
+
+        mock_key1_changes.reset_mock()
+        mock_key2_changes.reset_mock()
+        mock_dict_regular.reset_mock()
+
+        def update_key2(state: State) -> None:
+            state.d["key2"] = "updated2"
+
+        model.update_state(update_key2)
+
+        mock_key1_changes.assert_not_called()
+        mock_key2_changes.assert_called_once_with("value2", "updated2")
+        mock_dict_regular.assert_called_once_with("updated2")
+
+        mock_key1_changes.reset_mock()
+        mock_key2_changes.reset_mock()
+        mock_dict_regular.reset_mock()
+
+        def update_key1(state: State) -> None:
+            state.d["key1"] = "updated1"
+
+        model.update_state(update_key1)
+
+        mock_key1_changes.assert_called_once_with("value1", "updated1")
+        mock_key2_changes.assert_not_called()
+        mock_dict_regular.assert_not_called()
+
+        mock_key1_changes.reset_mock()
+        mock_key2_changes.reset_mock()
+        mock_dict_regular.reset_mock()
+
+        snapshot = model.snapshot()
+        # when restoring the entire state, we'd get everything firing unless we only want changes
+        model.restore(snapshot)
+
+        mock_key1_changes.assert_not_called()
+        mock_key2_changes.assert_not_called()
+        mock_dict_regular.assert_called_once_with("updated2")
+
     # TODO: figure out how to do this
     """
     def test_update_context(self) -> None:

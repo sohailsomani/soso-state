@@ -2,12 +2,12 @@ import typing
 
 from soso.state.event import Event, EventCallback, EventToken
 
-StateT_contra = typing.TypeVar('StateT_contra', contravariant=True)
-StateT = typing.TypeVar('StateT')
-RootStateT = typing.TypeVar('RootStateT')
-T = typing.TypeVar('T')
-T_contra = typing.TypeVar('T_contra', contravariant=True)
-T_co = typing.TypeVar('T_co', covariant=True)
+StateT_contra = typing.TypeVar("StateT_contra", contravariant=True)
+StateT = typing.TypeVar("StateT")
+RootStateT = typing.TypeVar("RootStateT")
+T = typing.TypeVar("T")
+T_contra = typing.TypeVar("T_contra", contravariant=True)
+T_co = typing.TypeVar("T_co", covariant=True)
 
 __all__ = []  # type: ignore
 
@@ -16,45 +16,42 @@ StateUpdateCallback = typing.Callable[[StateT_contra], None]
 
 
 class Model(typing.Protocol[StateT]):
-    def observe(self, callback: EventCallback[StateT]) -> EventToken:
-        ...
+    def observe(self, callback: EventCallback[StateT]) -> EventToken: ...
 
-    def observe_property(self, property: typing.Callable[[StateT], T],
-                         callback: EventCallback[T]) -> EventToken:
-        ...
+    def observe_property(
+        self, property: typing.Callable[[StateT], T], callback: EventCallback[T]
+    ) -> EventToken: ...
 
-    def update_state(self, func: StateUpdateCallback[StateT]) -> None:
-        ...
+    def observe_property_changes(
+        self,
+        property: typing.Callable[[StateT], T],
+        callback: typing.Callable[[typing.Optional[T], T], None],
+    ) -> EventToken: ...
+
+    def update_state(self, func: StateUpdateCallback[StateT]) -> None: ...
 
     # used by submodels
-    def update_state_root(self, root: typing.Callable[[StateT], T],
-                          func: StateUpdateCallback[T]) -> None:
-        ...
+    def update_state_root(
+        self, root: typing.Callable[[StateT], T], func: StateUpdateCallback[T]
+    ) -> None: ...
 
-    def update_properties(self, **kwargs: typing.Any) -> None:
-        ...
+    def update_properties(self, **kwargs: typing.Any) -> None: ...
 
     @property
-    def state(self) -> StateT:
-        ...
+    def state(self) -> StateT: ...
 
-    def wait_for(self) -> Event[StateT]:
-        ...
+    def wait_for(self) -> Event[StateT]: ...
 
-    def wait_for_property(self, property: typing.Callable[[StateT], T]) -> Event[T]:
-        ...
+    def wait_for_property(self, property: typing.Callable[[StateT], T]) -> Event[T]: ...
 
-    def snapshot(self) -> StateT:
-        ...
+    def snapshot(self) -> StateT: ...
 
-    def snapshot_property(self, property: typing.Callable[[StateT], T]) -> T:
-        ...
+    def snapshot_property(self, property: typing.Callable[[StateT], T]) -> T: ...
 
-    def restore(self, snapshot: StateT) -> None:
-        ...
+    def restore(self, snapshot: StateT) -> None: ...
 
-    def restore_property(self, snapshot: T, property: typing.Callable[[StateT], T]) -> None:
-        ...
+    def restore_property(
+        self, snapshot: T, property: typing.Callable[[StateT], T]
+    ) -> None: ...
 
-    def submodel(self, property: typing.Callable[[StateT], T]) -> "Model[T]":
-        ...
+    def submodel(self, property: typing.Callable[[StateT], T]) -> "Model[T]": ...
